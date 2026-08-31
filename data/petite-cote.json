@@ -1,0 +1,138 @@
+{
+  "zone_id": "petite-cote",
+  "zone_name": "Petite Côte",
+  "zone_center": {
+    "lat": 14.7566,
+    "lng": -17.395
+  },
+  "points": [
+    {
+      "id": "pc-001",
+      "name": "Resort Atlantic Saly",
+      "type": "projet",
+      "coordinates": {
+        "lat": 14.762,
+        "lng": -17.398
+      },
+      "status": "confirme",
+      "zoom_min_marker": 11,
+      "zoom_min_label": 13,
+      "summary": "Projet de resort de luxe accusé de fraude foncière, affaire en cours au tribunal de Mbour.",
+      "sources": [
+        {
+          "title": "Tribunal de Mbour – Affaire Resort Atlantic",
+          "url": "https://example.com/justice/tribunal-mbour-resort",
+          "date": "2026-07-10",
+          "type": "justice"
+        },
+        {
+          "title": "Sud Quotidien : fraude foncière à Saly",
+          "url": "https://example.com/presse/sud-quotidien-saly",
+          "date": "2026-06-22",
+          "type": "presse"
+        },
+        {
+          "title": "Registre foncier – Opposition n°2026-118",
+          "url": "https://example.com/officiel/registre-foncier-saly",
+          "date": "2026-05-15",
+          "type": "officiel"
+        }
+      ],
+      "last_verified": "2026-08-30"
+    },
+    {
+      "id": "pc-002",
+      "name": "Villas de la Plage Mbour",
+      "type": "projet",
+      "coordinates": {
+        "lat": 14.758,
+        "lng": -17.392
+      },
+      "status": "agree",
+      "zoom_min_marker": 11,
+      "zoom_min_label": 13,
+      "summary": "Ensemble de 24 villas balnéaires agréé par la commune de Mbour.",
+      "sources": [
+        {
+          "title": "Délibération commune de Mbour – Villas de la Plage",
+          "url": "https://example.com/officiel/deliberation-mbour-villas",
+          "date": "2026-02-14",
+          "type": "officiel"
+        }
+      ],
+      "last_verified": "2026-08-28"
+    },
+    {
+      "id": "pc-003",
+      "name": "Sénégal Beach Promotion",
+      "type": "promoteur",
+      "coordinates": {
+        "lat": 14.755,
+        "lng": -17.396
+      },
+      "status": "rumeur",
+      "zoom_min_marker": 11,
+      "zoom_min_label": 14,
+      "summary": "Promoteur cité dans des rumeurs de projets touristiques non confirmées.",
+      "sources": [
+        {
+          "title": "Blog tourisme Sénégal : nouveaux projets Petite Côte",
+          "url": "https://example.com/presse/blog-tourisme-petite-cote",
+          "date": "2026-08-03",
+          "type": "presse"
+        }
+      ],
+      "last_verified": "2026-08-22"
+    },
+    {
+      "id": "pc-004",
+      "name": "Complexe Hôtelier Somone",
+      "type": "projet",
+      "coordinates": {
+        "lat": 14.753,
+        "lng": -17.394
+      },
+      "status": "confirme",
+      "zoom_min_marker": 11,
+      "zoom_min_label": 13,
+      "summary": "Construction d'un hôtel 4 étoiles sans permis, arrêté préfectoral en mai 2026.",
+      "sources": [
+        {
+          "title": "Arrêté préfectoral suspension – Complexe Somone",
+          "url": "https://example.com/officiel/arrete-somone-2026",
+          "date": "2026-05-10",
+          "type": "officiel"
+        },
+        {
+          "title": "Africa Report : hôtels illégaux Petite Côte",
+          "url": "https://example.com/presse/africa-report-hotels",
+          "date": "2026-05-12",
+          "type": "presse"
+        }
+      ],
+      "last_verified": "2026-08-25"
+    },
+    {
+      "id": "pc-005",
+      "name": "Résidence Ngor Thiès",
+      "type": "projet",
+      "coordinates": {
+        "lat": 14.760,
+        "lng": -17.390
+      },
+      "status": "agree",
+      "zoom_min_marker": 11,
+      "zoom_min_label": 13,
+      "summary": "Projet résidentiel de 80 logements, toutes autorisations obtenues.",
+      "sources": [
+        {
+          "title": "Permis de construire – Mairie de Thiès",
+          "url": "https://example.com/officiel/permis-thies-ngor",
+          "date": "2026-03-05",
+          "type": "officiel"
+        }
+      ],
+      "last_verified": "2026-08-29"
+    }
+  ]
+}

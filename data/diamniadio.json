@@ -1,0 +1,132 @@
+{
+  "zone_id": "diamniadio",
+  "zone_name": "Diamniadio",
+  "zone_center": {
+    "lat": 14.7167,
+    "lng": -17.4167
+  },
+  "points": [
+    {
+      "id": "diam-001",
+      "name": "Cité Diamniadio – Ensemble B",
+      "type": "projet",
+      "coordinates": {
+        "lat": 14.718,
+        "lng": -17.418
+      },
+      "status": "agree",
+      "zoom_min_marker": 12,
+      "zoom_min_label": 14,
+      "summary": "Projet de 500 logements sociaux financé par l'État, travaux en cours.",
+      "sources": [
+        {
+          "title": "Marché public – Cité Diamniadio Phase B",
+          "url": "https://example.com/officiel/marche-diamniadio-b",
+          "date": "2025-11-15",
+          "type": "officiel"
+        },
+        {
+          "title": "Wal Fadjri : avancement travaux Diamniadio",
+          "url": "https://example.com/presse/avancement-diamniadio",
+          "date": "2026-08-05",
+          "type": "presse"
+        }
+      ],
+      "last_verified": "2026-08-30"
+    },
+    {
+      "id": "diam-002",
+      "name": "Dakar Skyline Promotion",
+      "type": "promoteur",
+      "coordinates": {
+        "lat": 14.7155,
+        "lng": -17.415
+      },
+      "status": "rumeur",
+      "zoom_min_marker": 12,
+      "zoom_min_label": 15,
+      "summary": "Promoteur cité dans des rumeurs de projets immobiliers non vérifiés à Diamniadio.",
+      "sources": [
+        {
+          "title": "Réseaux sociaux : rumeurs projets Diamniadio",
+          "url": "https://example.com/presse/rumeurs-reseaux-sociaux",
+          "date": "2026-08-12",
+          "type": "presse"
+        }
+      ],
+      "last_verified": "2026-08-20"
+    },
+    {
+      "id": "diam-003",
+      "name": "Complexe Commercial Dial Diop",
+      "type": "projet",
+      "coordinates": {
+        "lat": 14.7172,
+        "lng": -17.4142
+      },
+      "status": "confirme",
+      "zoom_min_marker": 12,
+      "zoom_min_label": 14,
+      "summary": "Projet de centre commercial sans étude d'impact environnemental, sanctionné par l'ANDE.",
+      "sources": [
+        {
+          "title": "Décision ANDE – Sanction Dial Diop SARL",
+          "url": "https://example.com/justice/ande-dial-diop",
+          "date": "2026-07-01",
+          "type": "justice"
+        },
+        {
+          "title": "Enquête 24 Heures : centres commerciaux non conformes",
+          "url": "https://example.com/presse/enquete-centres-commerciaux",
+          "date": "2026-06-28",
+          "type": "presse"
+        }
+      ],
+      "last_verified": "2026-08-25"
+    },
+    {
+      "id": "diam-004",
+      "name": "Résidence Université Alioune Diop",
+      "type": "projet",
+      "coordinates": {
+        "lat": 14.719,
+        "lng": -17.4195
+      },
+      "status": "agree",
+      "zoom_min_marker": 12,
+      "zoom_min_label": 14,
+      "summary": "Résidence étudiante de 300 chambres, conventionné avec l'université.",
+      "sources": [
+        {
+          "title": "Convention université-promoteur – Résidence Alioune Diop",
+          "url": "https://example.com/officiel/convention-alioune-diop",
+          "date": "2026-01-20",
+          "type": "officiel"
+        }
+      ],
+      "last_verified": "2026-08-28"
+    },
+    {
+      "id": "diam-005",
+      "name": "Terra Nova Immobilier",
+      "type": "promoteur",
+      "coordinates": {
+        "lat": 14.7148,
+        "lng": -17.4175
+      },
+      "status": "rumeur",
+      "zoom_min_marker": 12,
+      "zoom_min_label": 15,
+      "summary": "Nouveau venu sur le marché diamniadiois, aucune opération confirmée.",
+      "sources": [
+        {
+          "title": "Forums investissement Sénégal",
+          "url": "https://example.com/presse/forum-terra-nova",
+          "date": "2026-08-08",
+          "type": "presse"
+        }
+      ],
+      "last_verified": "2026-08-18"
+    }
+  ]
+}
