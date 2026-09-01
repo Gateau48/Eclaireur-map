@@ -39,7 +39,12 @@ export async function POST(req: NextRequest) {
   const product = await getChariowProduct(edition.chariowProductId);
   if (product?.is_free) {
     const { error } = await supabase.from("purchases").upsert(
-      { email: session.user.email, edition_id: editionId, status: "active" },
+      {
+        email: session.user.email,
+        edition_id: editionId,
+        chariow_sale_id: `free_${editionId}_${session.user.email}`,
+        status: "active"
+      },
       { onConflict: "chariow_sale_id" }
     );
     if (error) {
