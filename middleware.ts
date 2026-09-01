@@ -2,13 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { createClient } from "@supabase/supabase-js";
 
-// Client Supabase compatible fetch (Edge Runtime), pas un driver Postgres direct.
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { persistSession: false } }
-);
-
 const RESERVED_SEGMENTS = new Set([
   "connexion",
   "tableau-de-bord",
@@ -39,10 +32,22 @@ export async function middleware(req: NextRequest) {
   const edition = extractEditionFromPath(req.nextUrl.pathname);
 
   if (edition && requiresAccess(req.nextUrl.pathname)) {
+    // Si les variables d'environnement ne sont pas configurées, laisser
+    // passer sans vérification (mode développement / déploiement sans auth).
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY || !process.env.GOOGLE_CLIENT_ID) {
+      return NextResponse.next();
+    }
+
     const token = await getToken({ req });
     if (!token?.email) {
       return NextResponse.redirect(new URL("/connexion", req.url));
     }
+
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      { auth: { persistSession: false } }
+    );
 
     const { data } = await supabase
       .from("purchases")
