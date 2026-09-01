@@ -2,71 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --glass-bg-light: rgba(255, 255, 255, 0.65);
-  --glass-bg-dark: rgba(28, 28, 30, 0.65);
-  --glass-border-light: rgba(255, 255, 255, 0.3);
-  --glass-border-dark: rgba(255, 255, 255, 0.1);
-  --glass-blur: blur(28px) saturate(180%);
-  --radius-xl: 24px;
-  --radius-lg: 20px;
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
 
-  --status-agree-bg: rgba(76, 175, 80, 0.2);
-  --status-agree-border: rgba(76, 175, 80, 0.5);
-  --status-agree-text: #2e7d32;
+  body {
+    @apply font-sans text-neutral-900 dark:text-neutral-50 dark:bg-neutral-950 antialiased;
+  }
 
-  --status-rumeur-bg: rgba(255, 193, 7, 0.2);
-  --status-rumeur-border: rgba(255, 193, 7, 0.5);
-  --status-rumeur-text: #f57f17;
-
-  --status-confirme-bg: rgba(244, 67, 54, 0.2);
-  --status-confirme-border: rgba(244, 67, 54, 0.5);
-  --status-confirme-text: #c62828;
-
-  --font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --glass-bg-light: rgba(28, 28, 30, 0.65);
-    --glass-border-light: rgba(255, 255, 255, 0.1);
-
-    --status-agree-bg: rgba(76, 175, 80, 0.3);
-    --status-agree-border: rgba(76, 175, 80, 0.6);
-    --status-agree-text: #66bb6a;
-
-    --status-rumeur-bg: rgba(255, 193, 7, 0.3);
-    --status-rumeur-border: rgba(255, 193, 7, 0.6);
-    --status-rumeur-text: #ffd54f;
-
-    --status-confirme-bg: rgba(244, 67, 54, 0.3);
-    --status-confirme-border: rgba(244, 67, 54, 0.6);
-    --status-confirme-text: #ef5350;
+  /* Les routes carte (/[edition]) désactivent le scroll de page : la carte
+     gère son propre déplacement via ses gestes. Voir app/[edition]/layout.tsx */
+  body.map-route {
+    overflow: hidden;
   }
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+@layer components {
+  /* La "classe verre" — une seule définition, réutilisée partout
+     (nav au scroll, barre de recherche, boutons de zoom, panneau
+     de détail, cartes du tableau de bord). */
+  .glass {
+    @apply bg-white/65 dark:bg-neutral-900/65 backdrop-blur-2xl backdrop-saturate-150
+      border border-white/30 dark:border-white/10 shadow-glass;
+  }
 }
 
-html,
-body {
-  height: 100%;
-  width: 100%;
-  font-family: var(--font-family);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* Focus clavier visible partout, jamais supprimé */
+:focus-visible {
+  outline: 2px solid #0a84ff;
+  outline-offset: 2px;
 }
 
-.glass {
-  background: var(--glass-bg-light);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border-light);
-}
-
-.maplibregl-ctrl-attrib {
-  font-size: 10px !important;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -1,62 +1,59 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { getToken } from 'next-auth/jwt';
-import { supabase } from '@/lib/db/client';
+import { NextRequest, NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
+import { createClient } from "@supabase/supabase-js";
 
-const EDITION_SLUGS = ['dakar'];
+// Client Supabase compatible fetch (Edge Runtime), pas un driver Postgres direct.
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { persistSession: false } }
+);
 
+const RESERVED_SEGMENTS = new Set([
+  "connexion",
+  "tableau-de-bord",
+  "api",
+  "_next",
+  "favicon.ico"
+]);
+
+/** Extrait le slug d'édition depuis un chemin de type /dakar ou /dakar/vente. */
 function extractEditionFromPath(pathname: string): string | null {
-  const segments = pathname.split('/').filter(Boolean);
-  if (segments.length >= 1 && EDITION_SLUGS.includes(segments[0])) {
-    return segments[0];
-  }
-  return null;
+  const [, first] = pathname.split("/");
+  if (!first || RESERVED_SEGMENTS.has(first)) return null;
+  return first;
 }
 
+/**
+ * GARDE-FOU : exclure explicitement /[edition]/vente de la protection —
+ * c'est la route publique. Seule /[edition] (la carte) est protégée.
+ */
 function requiresAccess(pathname: string): boolean {
-  const segments = pathname.split('/').filter(Boolean);
-  if (segments.length < 2) return false;
-  if (segments[1] === 'vente') return false;
-  if (segments[1] === 'activate') return false;
-  return true;
+  const edition = extractEditionFromPath(pathname);
+  if (!edition) return false;
+  const rest = pathname.split("/").slice(2).join("/");
+  return rest === ""; // /[edition] exactement, pas /[edition]/vente
 }
 
 export async function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl;
+  const edition = extractEditionFromPath(req.nextUrl.pathname);
 
-  if (pathname === '/') {
-    return NextResponse.redirect(new URL('/dakar', req.url));
-  }
-
-  const edition = extractEditionFromPath(pathname);
-  if (edition && requiresAccess(pathname)) {
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-
-    if (!token) {
-      const signInUrl = new URL('/connexion', req.url);
-      signInUrl.searchParams.set('callbackUrl', pathname);
-      return NextResponse.redirect(signInUrl);
+  if (edition && requiresAccess(req.nextUrl.pathname)) {
+    const token = await getToken({ req });
+    if (!token?.email) {
+      return NextResponse.redirect(new URL("/connexion", req.url));
     }
 
-    const email = token.email;
-    if (!email) {
-      return NextResponse.redirect(new URL('/connexion', req.url));
-    }
+    const { data } = await supabase
+      .from("purchases")
+      .select("id")
+      .eq("email", token.email as string)
+      .eq("edition_id", edition)
+      .eq("status", "active")
+      .maybeSingle();
 
-    try {
-      const { data } = await supabase
-        .from('purchases')
-        .select('id')
-        .eq('email', email)
-        .eq('edition_id', edition)
-        .eq('status', 'active')
-        .maybeSingle();
-
-      if (!data) {
-        return NextResponse.redirect(new URL(`/${edition}/vente`, req.url));
-      }
-    } catch {
-      return NextResponse.next();
+    if (!data) {
+      return NextResponse.redirect(new URL(`/${edition}/vente`, req.url));
     }
   }
 
@@ -64,5 +61,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"]
 };

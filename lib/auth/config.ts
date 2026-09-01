@@ -1,29 +1,29 @@
-import NextAuth from 'next-auth';
-import Google from 'next-auth/providers/google';
+import type { NextAuthOptions } from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+// Stratégie de session JWT (pas de session base de données) — plus simple,
+// et compatible Edge Runtime pour middleware.ts (Partie 6 du brief).
+export const authOptions: NextAuthOptions = {
   providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!
+    })
   ],
-  session: {
-    strategy: 'jwt',
-  },
+  session: { strategy: "jwt" },
   pages: {
-    signIn: '/connexion',
+    signIn: "/connexion"
   },
   callbacks: {
-    jwt({ token, user }) {
-      if (user) {
-        token.email = user.email;
-      }
+    async jwt({ token, user }) {
+      if (user?.email) token.email = user.email;
       return token;
     },
-    session({ session, token }) {
-      session.user.email = token.email as string;
+    async session({ session, token }) {
+      if (token.email && session.user) {
+        session.user.email = token.email as string;
+      }
       return session;
-    },
-  },
-});
+    }
+  }
+};

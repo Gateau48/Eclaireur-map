@@ -1,210 +1,70 @@
 {
   "zone_id": "almadies",
   "zone_name": "Almadies",
-  "zone_center": {
-    "lat": 14.6928,
-    "lng": -17.444
-  },
+  "zone_center": { "lat": 14.7447, "lng": -17.5133 },
   "points": [
     {
-      "id": "dakar-001",
-      "name": "Société Générale Immobilière",
+      "id": "almadies-01",
+      "name": "Résidence Baobab Bay",
       "type": "promoteur",
-      "coordinates": {
-        "lat": 14.6935,
-        "lng": -17.4452
-      },
-      "status": "confirme",
-      "zoom_min_marker": 12,
-      "zoom_min_label": 14,
-      "summary": "Procédure judiciaire en cours pour violation du Code de l'urbanisme sur le projet Almadies Heights.",
-      "sources": [
-        {
-          "title": "Tribunal de Dakar : condamnation pour constructions illicites",
-          "url": "https://example.com/justice/condamnation-dakar-2026",
-          "date": "2026-08-15",
-          "type": "justice"
-        },
-        {
-          "title": "Enquête Le Quotidien : promoteurs et permis de construire",
-          "url": "https://example.com/presse/enquete-promoteurs-dakar",
-          "date": "2026-07-22",
-          "type": "presse"
-        }
-      ],
-      "last_verified": "2026-08-30"
-    },
-    {
-      "id": "dakar-002",
-      "name": "Cité du Cap Vert – Phase 2",
-      "type": "projet",
-      "coordinates": {
-        "lat": 14.6912,
-        "lng": -17.4389
-      },
+      "coordinates": { "lat": 14.7461, "lng": -17.5142 },
       "status": "agree",
-      "zoom_min_marker": 12,
+      "zoom_min_marker": 11,
       "zoom_min_label": 14,
-      "summary": "Projet résidentiel de 240 logements agréé par la mairie de Dakar en janvier 2026.",
+      "summary": "Programme résidentiel de 42 lots, permis de construire délivré en 2025. Aucune irrégularité relevée à ce jour.",
       "sources": [
         {
-          "title": "Délibération mairie de Dakar – Agrandissement Cité du Cap Vert",
-          "url": "https://example.com/officiel/deliberation-cap-vert-2026",
-          "date": "2026-01-10",
+          "title": "Permis de construire consulté en mairie",
+          "url": "https://example.com/sources/almadies-01-permis",
+          "date": "2025-11-02",
           "type": "officiel"
         }
       ],
-      "last_verified": "2026-08-28"
+      "last_verified": "2026-08-30T00:00:00.000Z"
     },
     {
-      "id": "dakar-003",
-      "name": "Résidence Corniche Ouest",
-      "type": "projet",
-      "coordinates": {
-        "lat": 14.6948,
-        "lng": -17.4475
-      },
+      "id": "almadies-02",
+      "name": "Terrains Ngor Extension",
+      "type": "promoteur",
+      "coordinates": { "lat": 14.7502, "lng": -17.5178 },
       "status": "rumeur",
       "zoom_min_marker": 12,
-      "zoom_min_label": 15,
-      "summary": "Rumeur de projet immobilier de luxe sur la corniche, non confirmé par la mairie.",
-      "sources": [
-        {
-          "title": "Blog immobilier Dakar : rumeurs projets corniche",
-          "url": "https://example.com/presse/rumeurs-corniche-2026",
-          "date": "2026-08-01",
-          "type": "presse"
-        }
-      ],
-      "last_verified": "2026-08-25"
-    },
-    {
-      "id": "dakar-004",
-      "name": "Groupe Ahmet & Fils Construction",
-      "type": "promoteur",
-      "coordinates": {
-        "lat": 14.6895,
-        "lng": -17.4412
-      },
-      "status": "confirme",
-      "zoom_min_marker": 12,
       "zoom_min_label": 14,
-      "summary": "Justice a établi des pratiques commerciales trompeuses sur trois projets à Dakar Plateau.",
+      "summary": "Plusieurs riverains signalent des ventes de parcelles sans titre foncier clair. Aucune procédure judiciaire ouverte à ce stade.",
       "sources": [
         {
-          "title": "Jugement tribunal de commerce Dakar – Affaire Ahmet",
-          "url": "https://example.com/justice/jugement-ahmet-2026",
+          "title": "Témoignages recueillis par la presse locale",
+          "url": "https://example.com/sources/almadies-02-presse",
           "date": "2026-06-18",
-          "type": "justice"
-        },
-        {
-          "title": "Africa Info : enquête sur les promoteurs douteux",
-          "url": "https://example.com/presse/enquete-promoteurs-africa-info",
-          "date": "2026-05-30",
           "type": "presse"
-        },
-        {
-          "title": "Registre du commerce – radiation partielle",
-          "url": "https://example.com/officiel/registre-commerce-ahmet",
-          "date": "2026-07-05",
-          "type": "officiel"
         }
       ],
-      "last_verified": "2026-08-20"
+      "last_verified": "2026-08-15T00:00:00.000Z"
     },
     {
-      "id": "dakar-005",
-      "name": "Almadies Bay Residence",
-      "type": "projet",
-      "coordinates": {
-        "lat": 14.6962,
-        "lng": -17.4398
-      },
-      "status": "agree",
-      "zoom_min_marker": 12,
-      "zoom_min_label": 14,
-      "summary": "Ensemble résidentiel de 180 logements situé aux Almadies, permis de construire validé.",
-      "sources": [
-        {
-          "title": "Mairie des Almadies – Permis de construire n°2026-042",
-          "url": "https://example.com/officiel/permis-almadies-bay",
-          "date": "2026-03-12",
-          "type": "officiel"
-        }
-      ],
-      "last_verified": "2026-08-29"
-    },
-    {
-      "id": "dakar-006",
-      "name": "Promoter West Africa Holdings",
+      "id": "almadies-03",
+      "name": "Les Jardins de la Corniche",
       "type": "promoteur",
-      "coordinates": {
-        "lat": 14.6878,
-        "lng": -17.4467
-      },
-      "status": "rumeur",
-      "zoom_min_marker": 12,
-      "zoom_min_label": 15,
-      "summary": "Nouveau promoteur entrant sur le marché dakarois, aucune source fiable confirmée.",
-      "sources": [
-        {
-          "title": "Forums immobiliers Dakar : nouveaux acteurs",
-          "url": "https://example.com/presse/forum-promoteurs-wa",
-          "date": "2026-08-10",
-          "type": "presse"
-        }
-      ],
-      "last_verified": "2026-08-22"
-    },
-    {
-      "id": "dakar-007",
-      "name": "Immeuble Route de Ouakam",
-      "type": "projet",
-      "coordinates": {
-        "lat": 14.6905,
-        "lng": -17.4502
-      },
+      "coordinates": { "lat": 14.7398, "lng": -17.5099 },
       "status": "confirme",
-      "zoom_min_marker": 12,
-      "zoom_min_label": 14,
-      "summary": "Construction avancée sans permis de construire, stoppée par arrêté municipal.",
+      "zoom_min_marker": 10,
+      "zoom_min_label": 13,
+      "summary": "Procédure judiciaire confirmée pour vente d'un terrain appartenant à l'État. Chantier à l'arrêt depuis janvier 2026.",
       "sources": [
         {
-          "title": "Arrêté municipal de suspension – Route de Ouakam",
-          "url": "https://example.com/officiel/arrete-ouakam-2026",
-          "date": "2026-04-20",
+          "title": "Communiqué du ministère de l'Urbanisme",
+          "url": "https://example.com/sources/almadies-03-officiel",
+          "date": "2026-01-20",
           "type": "officiel"
         },
         {
-          "title": "Dakar Matin : chantier stoppé à Ouakam",
-          "url": "https://example.com/presse/chantier-stoppe-ouakam",
-          "date": "2026-04-21",
-          "type": "presse"
+          "title": "Décision du tribunal (extrait public)",
+          "url": "https://example.com/sources/almadies-03-justice",
+          "date": "2026-02-11",
+          "type": "justice"
         }
       ],
-      "last_verified": "2026-08-18"
-    },
-    {
-      "id": "dakar-008",
-      "name": "Nouvelle Villas Ngor",
-      "type": "projet",
-      "coordinates": {
-        "lat": 14.6955,
-        "lng": -17.4355
-      },
-      "status": "agree",
-      "zoom_min_marker": 12,
-      "zoom_min_label": 14,
-      "summary": "Projet de 12 villas individuelles à Ngor, toutes les autorisations en règle.",
-      "sources": [
-        {
-          "title": "Permis de construire – Mairie de Ngor",
-          "url": "https://example.com/officiel/permis-ngor-villas",
-          "date": "2026-02-28",
-          "type": "officiel"
-        }
-      ],
-      "last_verified": "2026-08-27"
+      "last_verified": "2026-08-28T00:00:00.000Z"
     }
   ]
 }
