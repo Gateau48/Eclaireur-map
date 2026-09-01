@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
 import { getEdition } from "@/lib/editions";
-import { initChariowCheckout } from "@/lib/chariow";
+import { getChariowProduct, initChariowCheckout } from "@/lib/chariow";
+import { supabase } from "@/lib/db/client";
 
 /**
  * GARDE-FOU : seul point d'entrée autorisé à appeler l'API Chariow avec la
@@ -35,6 +36,19 @@ export async function POST(req: NextRequest) {
 
   const origin = req.nextUrl.origin;
 
+  const product = await getChariowProduct(edition.chariowProductId);
+  if (product?.is_free) {
+    const { error } = await supabase.from("purchases").upsert(
+      { email: session.user.email, edition_id: editionId, status: "active" },
+      { onConflict: "chariow_sale_id" }
+    );
+    if (error) {
+      console.error("Échec upsert purchase (gratuit):", error);
+      return NextResponse.json({ message: "Erreur lors de l'activation de l'accès" }, { status: 500 });
+    }
+    return NextResponse.json({ step: "completed", redirectUrl: `${origin}/${editionId}` });
+  }
+
   try {
     const result = await initChariowCheckout({
       productId: edition.chariowProductId,
@@ -56,8 +70,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ step: result.step, redirectUrl: result.checkoutUrl });
     }
 
-    // "completed" (produit gratuit) — n'arrive pas en pratique pour une
-    // édition payante, mais on redirige quand même proprement.
     return NextResponse.json({ step: result.step, redirectUrl: `${origin}/${editionId}/paiement-reussi` });
   } catch (err) {
     console.error("Échec initiation checkout Chariow:", err);
