@@ -1,6 +1,6 @@
 {
-  "zone_id": "dakar",
-  "zone_name": "Dakar",
+  "zone_id": "almadies",
+  "zone_name": "Almadies",
   "zone_center": {
     "lat": 14.6928,
     "lng": -17.444
@@ -167,7 +167,7 @@
       "status": "confirme",
       "zoom_min_marker": 12,
       "zoom_min_label": 14,
-      "summary": "Construction avancée sans permis de constrinaire, stoppée par arrêté municipal.",
+      "summary": "Construction avancée sans permis de construire, stoppée par arrêté municipal.",
       "sources": [
         {
           "title": "Arrêté municipal de suspension – Route de Ouakam",

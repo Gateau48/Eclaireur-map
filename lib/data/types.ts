@@ -35,17 +35,24 @@ export interface Zone {
   points: Point[];
 }
 
+export type ZoneData = Zone;
+
 export interface Edition {
   slug: string;
   name: string;
+  zones: string[];
   center: [number, number];
   zoom: number;
 }
 
 export const EDITIONS: Edition[] = [
-  { slug: 'dakar', name: 'Dakar', center: [-17.444, 14.6928], zoom: 12 },
-  { slug: 'diamniadio', name: 'Diamniadio', center: [-17.416, 14.7167], zoom: 12 },
-  { slug: 'petite-cote', name: 'Petite Côte', center: [-17.395, 14.7566], zoom: 11 },
+  {
+    slug: 'dakar',
+    name: 'Dakar',
+    zones: ['almadies', 'diamniadio', 'rufisque'],
+    center: [-17.444, 14.6928],
+    zoom: 12,
+  },
 ];
 
 export function getEditionBySlug(slug: string): Edition | undefined {

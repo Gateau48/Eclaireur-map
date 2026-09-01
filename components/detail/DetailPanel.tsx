@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Point } from '@/lib/data/types';
 import { useIsMobile } from '@/lib/hooks/useMediaQuery';
+import { cn } from '@/lib/utils/cn';
 import Badge from '@/components/ui/Badge';
 import SourceBadge from './SourceBadge';
 
@@ -18,12 +19,10 @@ export default function DetailPanel({ point, onClose }: DetailPanelProps) {
   const [dragStartY, setDragStartY] = useState(0);
   const [translateY, setTranslateY] = useState(0);
 
-  // Reset state when point changes
   useEffect(() => {
     setTranslateY(0);
   }, [point]);
 
-  // Handle swipe down to close on mobile
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!isMobile) return;
     setDragStartY(e.touches[0].clientY);
@@ -34,7 +33,6 @@ export default function DetailPanel({ point, onClose }: DetailPanelProps) {
     if (!isDragging || !isMobile) return;
     const currentY = e.touches[0].clientY;
     const diff = currentY - dragStartY;
-    // Only allow swiping down
     if (diff > 0) {
       setTranslateY(diff);
     }
@@ -43,7 +41,6 @@ export default function DetailPanel({ point, onClose }: DetailPanelProps) {
   const handleTouchEnd = () => {
     if (!isDragging || !isMobile) return;
     setIsDragging(false);
-    // Close if swiped down more than 100px
     if (translateY > 100) {
       onClose();
     } else {
@@ -51,14 +48,12 @@ export default function DetailPanel({ point, onClose }: DetailPanelProps) {
     }
   };
 
-  // Handle overlay click
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       onClose();
     }
   };
 
-  // Handle escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -67,9 +62,6 @@ export default function DetailPanel({ point, onClose }: DetailPanelProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
-  if (!point) return null;
-
-  // Format date
   const formatDate = (dateStr: string) => {
     try {
       return new Date(dateStr).toLocaleDateString('fr-FR', {
@@ -82,128 +74,95 @@ export default function DetailPanel({ point, onClose }: DetailPanelProps) {
     }
   };
 
-  // Mobile bottom sheet
-  if (isMobile) {
-    return (
-      <div
-        className="fixed inset-0 z-50 bg-black/30"
-        onClick={handleOverlayClick}
-      >
-        <div
-          ref={panelRef}
-          className="absolute bottom-0 left-0 right-0 glass rounded-t-3xl overflow-hidden"
-          style={{
-            maxHeight: '80vh',
-            transform: `translateY(${translateY}px)`,
-            transition: isDragging ? 'none' : 'transform 0.3s ease-out',
-          }}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        >
-          {/* Drag handle */}
-          <div className="flex justify-center py-3">
-            <div className="w-10 h-1 rounded-full bg-white/30" />
-          </div>
+  const isOpen = point !== null;
 
-          {/* Content */}
-          <div className="px-6 pb-8 overflow-y-auto" style={{ maxHeight: 'calc(80vh - 60px)' }}>
-            <DetailContent point={point} formatDate={formatDate} onClose={onClose} />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Desktop side panel
   return (
     <div
-      className="fixed inset-y-0 right-0 z-50 flex"
+      ref={panelRef}
+      className={cn(
+        'fixed z-20 bg-white/70 backdrop-blur-xl border border-white/30',
+        'shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)]',
+        'transition-transform duration-300 ease-out',
+        'inset-x-0 bottom-0 h-[70vh] rounded-t-[28px]',
+        'md:inset-x-auto md:right-0 md:top-0 md:bottom-0 md:h-full md:w-[400px] md:rounded-l-[28px] md:rounded-t-none',
+        !isDragging && (isOpen
+          ? 'translate-y-0 md:translate-x-0'
+          : 'translate-y-full md:translate-x-full')
+      )}
+      style={{
+        transform: isDragging
+          ? `translateY(${translateY}px)`
+          : undefined,
+        pointerEvents: isOpen ? 'auto' : 'none',
+      }}
       onClick={handleOverlayClick}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
-      <div className="flex-1" />
-      <div
-        ref={panelRef}
-        className="w-[380px] glass overflow-y-auto side-panel-enter"
-        style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
-      >
-        <div className="p-6">
-          <DetailContent point={point} formatDate={formatDate} onClose={onClose} />
-        </div>
+      {/* Drag handle - mobile */}
+      <div className="flex justify-center py-3 md:hidden">
+        <div className="w-10 h-1 rounded-full bg-black/10" />
+      </div>
+
+      <div className="p-6 h-full overflow-y-auto">
+        {point && (
+          <>
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1">
+                <h2 className="text-xl font-semibold leading-tight">{point.name}</h2>
+                <p className="text-sm opacity-60 mt-1 capitalize">{point.type}</p>
+              </div>
+              <button
+                onClick={onClose}
+                className="ml-4 p-2 rounded-full hover:bg-black/5 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                aria-label="Fermer"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <Badge status={point.status} size="lg" />
+            </div>
+
+            <div className="mb-6">
+              <p className="text-sm leading-relaxed">{point.summary}</p>
+            </div>
+
+            <div className="mb-6">
+              <h3 className="text-sm font-medium opacity-70 mb-3">Sources</h3>
+              <div className="space-y-3">
+                {point.sources.map((source, index) => (
+                  <div
+                    key={index}
+                    className="p-3 rounded-xl bg-black/5 border border-black/5"
+                  >
+                    <div className="flex items-start gap-2 mb-1">
+                      <SourceBadge type={source.type} />
+                    </div>
+                    <a
+                      href={source.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-medium hover:underline block mb-1"
+                    >
+                      {source.title}
+                    </a>
+                    <p className="text-xs opacity-50">{formatDate(source.date)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="text-xs opacity-40 border-t border-black/10 pt-4">
+              Vérifié le {formatDate(point.last_verified)}
+            </div>
+          </>
+        )}
       </div>
     </div>
-  );
-}
-
-function DetailContent({
-  point,
-  formatDate,
-  onClose,
-}: {
-  point: Point;
-  formatDate: (date: string) => string;
-  onClose: () => void;
-}) {
-  return (
-    <>
-      {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <h2 className="text-xl font-semibold leading-tight">{point.name}</h2>
-          <p className="text-sm opacity-60 mt-1 capitalize">{point.type}</p>
-        </div>
-        <button
-          onClick={onClose}
-          className="ml-4 p-2 rounded-full hover:bg-white/10 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-          aria-label="Fermer"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Status badge */}
-      <div className="mb-6">
-        <Badge status={point.status} size="lg" />
-      </div>
-
-      {/* Summary */}
-      <div className="mb-6">
-        <h3 className="text-sm font-medium opacity-70 mb-2">Résumé</h3>
-        <p className="text-sm leading-relaxed">{point.summary}</p>
-      </div>
-
-      {/* Sources */}
-      <div className="mb-6">
-        <h3 className="text-sm font-medium opacity-70 mb-3">Sources</h3>
-        <div className="space-y-3">
-          {point.sources.map((source, index) => (
-            <div
-              key={index}
-              className="p-3 rounded-xl bg-white/5 border border-white/10"
-            >
-              <div className="flex items-start gap-2 mb-1">
-                <SourceBadge type={source.type} />
-              </div>
-              <a
-                href={source.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-medium hover:underline block mb-1"
-              >
-                {source.title}
-              </a>
-              <p className="text-xs opacity-50">{formatDate(source.date)}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Last verified */}
-      <div className="text-xs opacity-40 border-t border-white/10 pt-4">
-        Dernière vérification : {formatDate(point.last_verified)}
-      </div>
-    </>
   );
 }

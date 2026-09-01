@@ -11,7 +11,7 @@ const statusConfig: Record<Status, { label: string; bgClass: string }> = {
     bgClass: 'bg-[var(--status-agree-bg)] border-[var(--status-agree-border)] text-[var(--status-agree-text)]',
   },
   rumeur: {
-    label: 'Rumeur',
+    label: 'Rumeur non confirmée',
     bgClass: 'bg-[var(--status-rumeur-bg)] border-[var(--status-rumeur-border)] text-[var(--status-rumeur-text)]',
   },
   confirme: {

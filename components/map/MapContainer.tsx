@@ -4,9 +4,15 @@ import { useEffect, useRef, useCallback } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { Zone, Point } from '@/lib/data/types';
-import { useIsMobile } from '@/lib/hooks/useMediaQuery';
+import { geojsonFromZoneData } from '@/lib/data/geojson';
 
 const MAP_STYLE = 'https://tiles.openfreemap.org/styles/positron';
+
+const STATUS_COLORS: Record<string, string> = {
+  agree: '#34D399',
+  rumeur: '#FBBF24',
+  confirme: '#F87171',
+};
 
 interface MapContainerProps {
   data: Zone;
@@ -16,13 +22,6 @@ interface MapContainerProps {
   onZoomChange: (zoom: number) => void;
   selectedPointId?: string;
 }
-
-// Custom marker colors based on status
-const STATUS_COLORS: Record<string, string> = {
-  agree: '#4CAF50',
-  rumeur: '#FFC107',
-  confirme: '#F44336',
-};
 
 export default function MapContainer({
   data,
@@ -34,151 +33,121 @@ export default function MapContainer({
 }: MapContainerProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
-  const markers = useRef<maplibregl.Marker[]>([]);
-  const isMobile = useIsMobile();
 
-  // Create marker element
-  const createMarkerElement = useCallback(
-    (point: Point, currentZoom: number) => {
-      const el = document.createElement('div');
-      el.className = 'custom-marker';
-      el.style.cssText = `
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        background: ${STATUS_COLORS[point.status]};
-        border: 3px solid white;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        cursor: pointer;
-        transition: transform 0.2s, box-shadow 0.2s;
-      `;
+  const handlePointClickRef = useRef(onPointClick);
+  handlePointClickRef.current = onPointClick;
 
-      // Show label if zoom is high enough
-      if (currentZoom >= point.zoom_min_label) {
-        const label = document.createElement('div');
-        label.style.cssText = `
-          position: absolute;
-          top: 100%;
-          left: 50%;
-          transform: translateX(-50%);
-          white-space: nowrap;
-          font-size: 11px;
-          font-weight: 500;
-          color: white;
-          background: rgba(0,0,0,0.7);
-          padding: 2px 6px;
-          border-radius: 4px;
-          margin-top: 4px;
-          pointer-events: none;
-        `;
-        label.textContent = point.name;
-        el.appendChild(label);
-      }
-
-      // Hover effect
-      el.addEventListener('mouseenter', () => {
-        el.style.transform = 'scale(1.2)';
-        el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.4)';
-      });
-      el.addEventListener('mouseleave', () => {
-        el.style.transform = 'scale(1)';
-        el.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
-      });
-
-      // Click handler
-      el.addEventListener('click', () => onPointClick(point));
-
-      return el;
-    },
-    [onPointClick]
-  );
-
-  // Initialize map
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
-    map.current = new maplibregl.Map({
+    const m = new maplibregl.Map({
       container: mapContainer.current,
       style: MAP_STYLE,
       center,
       zoom,
-      // Enable cooperative gestures on desktop to prevent accidental zoom
-      cooperativeGestures: !isMobile,
+      cooperativeGestures: true,
     });
 
-    // Add controls
-    map.current.addControl(new maplibregl.NavigationControl(), 'bottom-right');
-    map.current.addControl(new maplibregl.FullscreenControl(), 'bottom-right');
+    m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
 
-    // Track zoom changes
-    map.current.on('zoom', () => {
-      const currentZoom = map.current?.getZoom() || 12;
-      onZoomChange(currentZoom);
+    m.on('load', () => {
+      const geojson = geojsonFromZoneData(data);
+
+      m.addSource('points', {
+        type: 'geojson',
+        data: geojson,
+      });
+
+      m.addLayer({
+        id: 'points-circles',
+        type: 'circle',
+        source: 'points',
+        paint: {
+          'circle-radius': 8,
+          'circle-color': [
+            'match',
+            ['get', 'status'],
+            'agree',
+            STATUS_COLORS.agree,
+            'rumeur',
+            STATUS_COLORS.rumeur,
+            'confirme',
+            STATUS_COLORS.confirme,
+            '#999999',
+          ],
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#ffffff',
+        },
+        filter: ['<=', ['get', 'zoom_min_marker'], ['zoom']],
+      });
+
+      m.addLayer({
+        id: 'points-labels',
+        type: 'symbol',
+        source: 'points',
+        layout: {
+          'text-field': ['get', 'name'],
+          'text-size': 13,
+          'text-offset': [0, 1.5],
+        },
+        filter: ['<=', ['get', 'zoom_min_label'], ['zoom']],
+      });
+
+      m.on('click', 'points-circles', (e) => {
+        if (e.features && e.features.length > 0) {
+          const feature = e.features[0];
+          const props = feature.properties as Record<string, unknown>;
+          const point: Point = {
+            id: props.id as string,
+            name: props.name as string,
+            type: props.type as 'promoteur' | 'projet',
+            coordinates: {
+              lat: (feature.geometry as GeoJSON.Point).coordinates[1] as number,
+              lng: (feature.geometry as GeoJSON.Point).coordinates[0] as number,
+            },
+            status: props.status as Point['status'],
+            zoom_min_marker: props.zoom_min_marker as number,
+            zoom_min_label: props.zoom_min_label as number,
+            summary: props.summary as string,
+            sources: props.sources as Point['sources'],
+            last_verified: props.last_verified as string,
+          };
+          handlePointClickRef.current(point);
+        }
+      });
+
+      m.on('mouseenter', 'points-circles', () => {
+        m.getCanvas().style.cursor = 'pointer';
+      });
+
+      m.on('mouseleave', 'points-circles', () => {
+        m.getCanvas().style.cursor = '';
+      });
     });
+
+    m.on('zoom', () => {
+      onZoomChange(m.getZoom());
+    });
+
+    map.current = m;
 
     return () => {
-      map.current?.remove();
+      m.remove();
       map.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update markers when data or zoom changes
   useEffect(() => {
-    if (!map.current) return;
+    if (!map.current || !map.current.isStyleLoaded()) return;
 
-    const currentZoom = map.current.getZoom();
+    const source = map.current.getSource('points') as maplibregl.GeoJSONSource;
+    if (source) {
+      const geojson = geojsonFromZoneData(data);
+      source.setData(geojson);
+    }
+  }, [data]);
 
-    // Remove existing markers
-    markers.current.forEach((marker) => marker.remove());
-    markers.current = [];
-
-    // Add markers for visible points
-    data.points.forEach((point) => {
-      if (currentZoom >= point.zoom_min_marker) {
-        const el = createMarkerElement(point, currentZoom);
-
-        const marker = new maplibregl.Marker({ element: el })
-          .setLngLat([point.coordinates.lng, point.coordinates.lat])
-          .addTo(map.current!);
-
-        markers.current.push(marker);
-      }
-    });
-  }, [data.points, createMarkerElement]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Update markers on zoom
-  useEffect(() => {
-    if (!map.current) return;
-
-    const handleZoom = () => {
-      const currentZoom = map.current?.getZoom() || 12;
-
-      // Remove existing markers
-      markers.current.forEach((marker) => marker.remove());
-      markers.current = [];
-
-      // Re-add markers with updated visibility
-      data.points.forEach((point) => {
-        if (currentZoom >= point.zoom_min_marker) {
-          const el = createMarkerElement(point, currentZoom);
-
-          const marker = new maplibregl.Marker({ element: el })
-            .setLngLat([point.coordinates.lng, point.coordinates.lat])
-            .addTo(map.current!);
-
-          markers.current.push(marker);
-        }
-      });
-    };
-
-    map.current.on('zoom', handleZoom);
-    return () => {
-      map.current?.off('zoom', handleZoom);
-    };
-  }, [data.points, createMarkerElement]);
-
-  // Fly to selected point
   useEffect(() => {
     if (!map.current || !selectedPointId) return;
 
@@ -186,7 +155,7 @@ export default function MapContainer({
     if (point) {
       map.current.flyTo({
         center: [point.coordinates.lng, point.coordinates.lat],
-        zoom: Math.max(map.current.getZoom(), point.zoom_min_label),
+        zoom: Math.max(map.current.getZoom(), 15),
         essential: true,
       });
     }
@@ -195,7 +164,7 @@ export default function MapContainer({
   return (
     <div
       ref={mapContainer}
-      className="absolute inset-0"
+      className="absolute inset-0 z-0"
       style={{
         paddingTop: 'env(safe-area-inset-top)',
         paddingBottom: 'env(safe-area-inset-bottom)',

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useCallback, createContext, useContext, type ReactNode } from 'react';
-import type { Point } from '@/lib/data/types';
+import { useState, useCallback, createContext, useContext } from 'react';
+import type { Point, Zone } from '@/lib/data/types';
 import MapContainer from '@/components/map/MapContainer';
 import SearchBar from '@/components/search/SearchBar';
 import DetailPanel from '@/components/detail/DetailPanel';
@@ -26,12 +26,8 @@ function useMapState(): MapState {
 }
 
 interface EditionPageClientProps {
-  zoneData: {
-    zone_id: string;
-    zone_name: string;
-    zone_center: { lat: number; lng: number };
-    points: Point[];
-  };
+  zoneData: Zone;
+  zones: Zone[];
   center: [number, number];
   zoom: number;
 }
@@ -40,10 +36,6 @@ export default function EditionPageClient({ zoneData, center, zoom }: EditionPag
   const [selectedPoint, setSelectedPoint] = useState<Point | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentZoom, setZoom] = useState(zoom);
-
-  const handlePointClick = useCallback((point: Point) => {
-    setSelectedPoint(point);
-  }, []);
 
   const handlePointSelect = useCallback((point: Point) => {
     setSelectedPoint(point);
@@ -73,12 +65,15 @@ export default function EditionPageClient({ zoneData, center, zoom }: EditionPag
           data={zoneData}
           center={center}
           zoom={currentZoom}
-          onPointClick={handlePointClick}
+          onPointClick={handlePointSelect}
           onZoomChange={handleZoomChange}
           selectedPointId={selectedPoint?.id}
         />
 
-        <div className="absolute top-4 left-4 right-4 z-30" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        <div
+          className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-[calc(100%-32px)] max-w-md"
+          style={{ paddingTop: 'env(safe-area-inset-top)' }}
+        >
           <SearchBar data={zoneData} onPointSelect={handlePointSelect} />
         </div>
 
