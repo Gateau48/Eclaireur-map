@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   const deliveryId = req.headers.get("x-pulse-delivery-id"); // absent sur un test event
   const eventHeader = req.headers.get("x-pulse-event");
 
-  if (!verifyPulseSignature(rawBody, signature, process.env.CHARIOW_PULSE_SECRET)) {
+  if (!verifyPulseSignature(rawBody, signature, process.env.CHARIOW_WEBHOOK_SECRET)) {
     return new Response("Invalid signature", { status: 401 });
   }
 
