@@ -173,7 +173,7 @@ export interface MapMarkerProps {
  * Marqueur basé sur le DOM (maplibregl.Marker + portail React).
  * GARDE-FOU DE PERFORMANCE : convient jusqu'à quelques centaines de
  * marqueurs. Au-delà de plusieurs milliers de points, passer à une source
- * GeoJSON + layer (voir lib/data/geojson.ts et doc mapcn "Advanced/GeoJSON").
+ * GeoJSON + layer (voir lib/geojson.ts et doc mapcn "Advanced/GeoJSON").
  */
 export function MapMarker({ longitude, latitude, children }: MapMarkerProps) {
   const { map } = useMap();

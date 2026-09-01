@@ -1,30 +1,34 @@
 import { createHmac, timingSafeEqual } from "crypto";
 
 /**
- * Vérifie la signature HMAC-SHA256 d'un webhook Chariow.
+ * Vérifie la signature HMAC-SHA256 d'un Pulse Chariow, selon le contrat
+ * documenté ici : https://chariow.dev/en/guides/pulse-security
  *
- * GARDE-FOU : la vérification doit se faire sur le corps BRUT de la requête
- * (rawBody), avant tout JSON.parse — voir app/api/webhooks/chariow/route.ts.
+ *   signature = "sha256=" + hex( hmac_sha256(raw_request_body, pulse_secret) )
  *
- * Note : le format exact de signature de Chariow (algorithme, encodage,
- * éventuel préfixe "sha256=") est à confirmer dans leur documentation
- * développeur au moment de l'intégration ; cette implémentation suit le
- * schéma HMAC standard le plus courant et doit être ajustée si Chariow
- * documente un format différent.
+ * GARDE-FOU : `rawBody` doit être les octets bruts EXACTS reçus, avant tout
+ * JSON.parse — ne jamais re-sérialiser le payload parsé pour vérifier,
+ * les barres obliques échappées et les \uXXXX suffisent à casser le digest.
+ * `pulse_secret` est le secret de signature du Pulse (préfixe `whsec_`),
+ * distinct de la clé API — voir CHARIOW_PULSE_SECRET dans .env.example.
  */
-export function verifySignature(
+export function verifyPulseSignature(
   rawBody: string,
   signatureHeader: string | null,
-  secret: string | undefined
+  pulseSecret: string | undefined
 ): boolean {
-  if (!signatureHeader || !secret) return false;
+  if (!signatureHeader || !pulseSecret) return false;
+  if (!signatureHeader.startsWith("sha256=")) return false;
 
-  const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
-  const provided = signatureHeader.replace(/^sha256=/, "");
+  const expected =
+    "sha256=" + createHmac("sha256", pulseSecret).update(rawBody, "utf8").digest("hex");
 
-  const expectedBuf = Buffer.from(expected, "hex");
-  const providedBuf = Buffer.from(provided, "hex");
+  const receivedBuf = Buffer.from(signatureHeader);
+  const expectedBuf = Buffer.from(expected);
 
-  if (expectedBuf.length !== providedBuf.length) return false;
-  return timingSafeEqual(expectedBuf, providedBuf);
+  // GARDE-FOU : vérifier la longueur avant timingSafeEqual, qui lève une
+  // exception (plutôt que de renvoyer false) sur des buffers de tailles
+  // différentes.
+  if (receivedBuf.length !== expectedBuf.length) return false;
+  return timingSafeEqual(receivedBuf, expectedBuf);
 }

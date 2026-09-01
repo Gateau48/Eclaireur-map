@@ -1,7 +1,7 @@
 import almadiesRaw from "@/data/dakar/almadies.json";
 import diamniadioRaw from "@/data/dakar/diamniadio.json";
 import rufisqueRaw from "@/data/dakar/rufisque.json";
-import { parseZoneData, type ZoneData } from "@/lib/data/schema";
+import { parseZoneData, type ZoneData } from "@/lib/schema";
 
 export interface Edition {
   id: string;

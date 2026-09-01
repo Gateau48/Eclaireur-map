@@ -2,22 +2,69 @@
   "zone_id": "rufisque",
   "zone_name": "Rufisque",
   "zone_center": { "lat": 14.7167, "lng": -17.2667 },
+  "promoters": [
+    {
+      "id": "promoteur-oceane-invest",
+      "name": "Océane Invest",
+      "quartier": "Rufisque",
+      "years_experience": 9,
+      "certified": false,
+      "property_count": 6,
+      "photo_url": "/promoteurs/oceane-invest.jpg",
+      "about": [
+        "Société active à Rufisque depuis 2017, plusieurs programmes livrés sans incident.",
+        "Un dossier de double vente a été confirmé par jugement en 2026 sur l'un de ses programmes."
+      ],
+      "sources": [
+        {
+          "category": "justice",
+          "label": "Extrait de jugement",
+          "description": "Audience publique",
+          "url": "https://example.com/sources/oceane-invest-justice",
+          "date": "2026-03-05"
+        }
+      ]
+    },
+    {
+      "id": "promoteur-keur-momar",
+      "name": "Coopérative Keur Momar",
+      "quartier": "Rufisque",
+      "years_experience": 15,
+      "certified": true,
+      "property_count": 9,
+      "photo_url": "/promoteurs/keur-momar.jpg",
+      "about": [
+        "Coopérative d'habitat reconnue, aucun litige recensé sur ses lotissements.",
+        "Permis d'aménager systématiquement affichés sur site avant commercialisation."
+      ],
+      "sources": [
+        {
+          "category": "officiel",
+          "label": "Vérification du permis d'aménager",
+          "url": "https://example.com/sources/keur-momar-officiel",
+          "date": "2026-04-14"
+        }
+      ]
+    }
+  ],
   "points": [
     {
       "id": "rufisque-01",
       "name": "Résidence Océane",
-      "type": "promoteur",
+      "promoter_id": "promoteur-oceane-invest",
       "coordinates": { "lat": 14.7183, "lng": -17.2701 },
       "status": "confirme",
       "zoom_min_marker": 10,
       "zoom_min_label": 13,
       "summary": "Double vente confirmée par jugement : deux acheteurs différents détiennent des actes pour la même parcelle.",
+      "project_photo_url": "/projets/residence-oceane.jpg",
       "sources": [
         {
-          "title": "Extrait de jugement (audience publique)",
+          "category": "justice",
+          "label": "Extrait de jugement",
+          "description": "Audience publique",
           "url": "https://example.com/sources/rufisque-01-justice",
-          "date": "2026-03-05",
-          "type": "justice"
+          "date": "2026-03-05"
         }
       ],
       "last_verified": "2026-08-10T00:00:00.000Z"
@@ -25,18 +72,19 @@
     {
       "id": "rufisque-02",
       "name": "Lotissement Keur Momar",
-      "type": "promoteur",
+      "promoter_id": "promoteur-keur-momar",
       "coordinates": { "lat": 14.7129, "lng": -17.2618 },
       "status": "agree",
       "zoom_min_marker": 11,
       "zoom_min_label": 14,
       "summary": "Lotissement conforme, permis d'aménager en règle, aucun litige recensé.",
+      "project_photo_url": "/projets/lotissement-keur-momar.jpg",
       "sources": [
         {
-          "title": "Vérification du permis d'aménager",
+          "category": "officiel",
+          "label": "Vérification du permis d'aménager",
           "url": "https://example.com/sources/rufisque-02-officiel",
-          "date": "2026-04-14",
-          "type": "officiel"
+          "date": "2026-04-14"
         }
       ],
       "last_verified": "2026-08-25T00:00:00.000Z"

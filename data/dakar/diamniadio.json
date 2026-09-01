@@ -2,22 +2,68 @@
   "zone_id": "diamniadio",
   "zone_name": "Diamniadio",
   "zone_center": { "lat": 14.7369, "lng": -17.1875 },
+  "promoters": [
+    {
+      "id": "promoteur-pole-urbain",
+      "name": "Agence du Pôle Urbain",
+      "quartier": "Diamniadio",
+      "years_experience": 12,
+      "certified": true,
+      "property_count": 15,
+      "photo_url": "/promoteurs/pole-urbain.jpg",
+      "about": [
+        "Structure publique-privée pilotant l'aménagement du pôle urbain de Diamniadio depuis 2014.",
+        "Chaque programme est validé par un dossier d'urbanisme consultable en mairie."
+      ],
+      "sources": [
+        {
+          "category": "officiel",
+          "label": "Dossier officiel du pôle urbain",
+          "url": "https://example.com/sources/pole-urbain-officiel",
+          "date": "2025-09-10"
+        }
+      ]
+    },
+    {
+      "id": "promoteur-momo-diallo",
+      "name": "Momo Diallo",
+      "quartier": "Diamniadio",
+      "years_experience": 3,
+      "certified": false,
+      "property_count": 2,
+      "photo_url": "/promoteurs/momo-diallo.jpg",
+      "about": [
+        "Publicité active sur les réseaux sociaux depuis fin 2025.",
+        "Aucun titre de propriété vérifiable communiqué aux acheteurs contactés par la rédaction."
+      ],
+      "sources": [
+        {
+          "category": "presse",
+          "label": "Enquête presse",
+          "description": "Ventes en ligne sans titre vérifiable",
+          "url": "https://example.com/sources/momo-diallo-presse",
+          "date": "2026-07-02"
+        }
+      ]
+    }
+  ],
   "points": [
     {
       "id": "diamniadio-01",
       "name": "Cité du Pôle Urbain",
-      "type": "promoteur",
+      "promoter_id": "promoteur-pole-urbain",
       "coordinates": { "lat": 14.7391, "lng": -17.1902 },
       "status": "agree",
       "zoom_min_marker": 11,
       "zoom_min_label": 14,
       "summary": "Programme public-privé validé par l'agence du pôle urbain, livraison prévue en phases jusqu'en 2028.",
+      "project_photo_url": "/projets/cite-pole-urbain.jpg",
       "sources": [
         {
-          "title": "Dossier officiel du pôle urbain de Diamniadio",
+          "category": "officiel",
+          "label": "Dossier officiel du pôle urbain",
           "url": "https://example.com/sources/diamniadio-01-officiel",
-          "date": "2025-09-10",
-          "type": "officiel"
+          "date": "2025-09-10"
         }
       ],
       "last_verified": "2026-08-20T00:00:00.000Z"
@@ -25,18 +71,19 @@
     {
       "id": "diamniadio-02",
       "name": "Domaine Les Collines",
-      "type": "promoteur",
+      "promoter_id": "promoteur-momo-diallo",
       "coordinates": { "lat": 14.7302, "lng": -17.1821 },
       "status": "rumeur",
       "zoom_min_marker": 12,
       "zoom_min_label": 14,
       "summary": "Publicité agressive sur les réseaux sociaux, mais aucun titre de propriété vérifiable communiqué aux acheteurs contactés.",
+      "project_photo_url": "/projets/domaine-les-collines.jpg",
       "sources": [
         {
-          "title": "Enquête presse sur les ventes en ligne",
+          "category": "presse",
+          "label": "Enquête presse sur les ventes en ligne",
           "url": "https://example.com/sources/diamniadio-02-presse",
-          "date": "2026-07-02",
-          "type": "presse"
+          "date": "2026-07-02"
         }
       ],
       "last_verified": "2026-08-22T00:00:00.000Z"
