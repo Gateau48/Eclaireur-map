@@ -70,39 +70,3 @@ body {
 .maplibregl-ctrl-attrib {
   font-size: 10px !important;
 }
-
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-
-@keyframes slideDown {
-  from { transform: translateY(0); }
-  to { transform: translateY(100%); }
-}
-
-.bottom-sheet-enter {
-  animation: slideUp 0.3s ease-out forwards;
-}
-
-.bottom-sheet-exit {
-  animation: slideDown 0.3s ease-in forwards;
-}
-
-@keyframes slideInRight {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
-}
-
-@keyframes slideOutRight {
-  from { transform: translateX(0); }
-  to { transform: translateX(100%); }
-}
-
-.side-panel-enter {
-  animation: slideInRight 0.3s ease-out forwards;
-}
-
-.side-panel-exit {
-  animation: slideOutRight 0.3s ease-in forwards;
-}

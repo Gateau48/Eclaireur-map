@@ -1,6 +1,6 @@
 import { auth } from '@/lib/auth/config';
 import { redirect } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/db/client';
 import { EDITIONS } from '@/lib/data/types';
 import EditionCard from '@/components/EditionCard';
 
@@ -9,11 +9,6 @@ export default async function TableauDeBordPage() {
   if (!session) {
     redirect('/connexion');
   }
-
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
 
   const { data: purchases } = await supabase
     .from('purchases')

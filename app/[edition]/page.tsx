@@ -16,7 +16,7 @@ export default async function EditionPage({ params }: PageProps) {
     notFound();
   }
 
-  const zones = await getEditionData(edition);
+  const zones = getEditionData(edition);
   if (zones.length === 0) {
     notFound();
   }
