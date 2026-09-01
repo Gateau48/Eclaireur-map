@@ -24,7 +24,7 @@ export const EDITIONS: Record<string, Edition> = {
     id: "dakar",
     name: "Dakar",
     thumbnailUrl: "/editions/dakar-thumbnail.jpg",
-    chariowProductId: process.env.NEXT_PUBLIC_CHARIOW_DAKAR_PRODUCT_ID ?? "dakar-edition",
+    chariowProductId: process.env.CHARIOW_DAKAR_PRODUCT_ID ?? "dakar-edition",
     zones: dakarZones
   }
 };
