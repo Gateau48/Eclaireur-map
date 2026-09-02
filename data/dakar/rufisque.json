@@ -10,7 +10,7 @@
       "years_experience": 9,
       "certified": false,
       "property_count": 6,
-      "photo_url": "/promoteurs/oceane-invest.jpg",
+      "photo_url": "https://picsum.photos/seed/oceane-invest/400/300",
       "about": [
         "Société active à Rufisque depuis 2017, plusieurs programmes livrés sans incident.",
         "Un dossier de double vente a été confirmé par jugement en 2026 sur l'un de ses programmes."
@@ -32,7 +32,7 @@
       "years_experience": 15,
       "certified": true,
       "property_count": 9,
-      "photo_url": "/promoteurs/keur-momar.jpg",
+      "photo_url": "https://picsum.photos/seed/keur-momar/400/300",
       "about": [
         "Coopérative d'habitat reconnue, aucun litige recensé sur ses lotissements.",
         "Permis d'aménager systématiquement affichés sur site avant commercialisation."
@@ -54,10 +54,11 @@
       "promoter_id": "promoteur-oceane-invest",
       "coordinates": { "lat": 14.7183, "lng": -17.2701 },
       "status": "confirme",
+      "issue_category": "foncier",
       "zoom_min_marker": 10,
       "zoom_min_label": 13,
       "summary": "Double vente confirmée par jugement : deux acheteurs différents détiennent des actes pour la même parcelle.",
-      "project_photo_url": "/projets/residence-oceane.jpg",
+      "project_photo_url": "https://picsum.photos/seed/residence-oceane/800/600",
       "sources": [
         {
           "category": "justice",
@@ -78,7 +79,7 @@
       "zoom_min_marker": 11,
       "zoom_min_label": 14,
       "summary": "Lotissement conforme, permis d'aménager en règle, aucun litige recensé.",
-      "project_photo_url": "/projets/lotissement-keur-momar.jpg",
+      "project_photo_url": "https://picsum.photos/seed/lotissement-keur-momar/800/600",
       "sources": [
         {
           "category": "officiel",

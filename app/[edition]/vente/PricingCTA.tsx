@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { Lock, ShieldCheck, Timer } from "lucide-react";
+import { Infinity as InfinityIcon, Lock, ShieldCheck, Timer } from "lucide-react";
 // import type uniquement : évite d'entraîner "server-only" (lib/chariow.ts)
 // dans le bundle client — ce composant ne reçoit que des données déjà
 // sérialisées depuis la page serveur.
 import type { ChariowAmount } from "@/lib/chariow";
+import { useApproxLocalPrice } from "@/lib/currency";
 
 interface PricingCTAProps {
   editionId: string;
@@ -32,6 +33,24 @@ function splitName(fullName?: string | null) {
   return { firstName, lastName: rest.join(" ") };
 }
 
+function Field({
+  label,
+  children
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs font-medium text-neutral-500">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+const inputClass =
+  "w-full rounded-xl border border-black/10 bg-white/60 px-3 py-2.5 text-sm outline-none focus-visible:border-teal-500 dark:border-white/10 dark:bg-white/5";
+
 export function PricingCTA({
   editionId,
   editionName,
@@ -49,6 +68,10 @@ export function PricingCTA({
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Estimation indicative dans la devise probable du visiteur — voir
+  // lib/currency.ts pour la limite honnête de l'API Chariow à ce sujet.
+  const approxLocalPrice = useApproxLocalPrice(currentPrice);
 
   async function handlePay(e: React.FormEvent) {
     e.preventDefault();
@@ -85,9 +108,13 @@ export function PricingCTA({
     <section id="debloquer" className="mx-auto max-w-6xl px-6 py-24">
       <div className="glass mx-auto max-w-md rounded-4xl p-8">
         <div className="text-center">
+          <span className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-teal-600/10 px-3 py-1 text-xs font-semibold text-teal-700 dark:text-teal-400">
+            <InfinityIcon className="h-3.5 w-3.5" aria-hidden />
+            Accès à vie
+          </span>
           <h2 className="text-2xl font-semibold tracking-tight">Débloquer {editionName}</h2>
           <p className="mt-2 text-sm text-neutral-500">
-            Accès complet à la carte, mise à jour au fil des vérifications.
+            Un seul paiement, accès permanent à la carte et à ses mises à jour.
           </p>
         </div>
 
@@ -105,6 +132,12 @@ export function PricingCTA({
             <span className="text-sm text-neutral-400">Prix indisponible pour le moment</span>
           )}
         </div>
+
+        {approxLocalPrice && (
+          <p className="mt-1 text-center text-xs text-neutral-400">
+            ≈ {approxLocalPrice} à titre indicatif — montant exact confirmé au paiement
+          </p>
+        )}
 
         {priceOff && (
           <p className="mt-1 text-center text-xs font-medium text-emerald-600">
@@ -136,43 +169,51 @@ export function PricingCTA({
             </button>
           ) : (
             <form onSubmit={handlePay} className="space-y-3">
+              <p className="text-xs font-medium text-neutral-500">
+                Pour la facturation — le nom qui apparaîtra sur votre reçu Chariow
+              </p>
               <div className="grid grid-cols-2 gap-3">
-                <input
-                  required
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="Prénom"
-                  className="rounded-xl border border-black/10 bg-white/60 px-3 py-2 text-sm outline-none focus-visible:border-teal-500 dark:border-white/10 dark:bg-white/5"
-                />
-                <input
-                  required
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  placeholder="Nom"
-                  className="rounded-xl border border-black/10 bg-white/60 px-3 py-2 text-sm outline-none focus-visible:border-teal-500 dark:border-white/10 dark:bg-white/5"
-                />
+                <Field label="Prénom">
+                  <input
+                    required
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className={inputClass}
+                  />
+                </Field>
+                <Field label="Nom">
+                  <input
+                    required
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className={inputClass}
+                  />
+                </Field>
               </div>
-              <div className="grid grid-cols-3 gap-3">
-                <select
-                  value={countryCode}
-                  onChange={(e) => setCountryCode(e.target.value)}
-                  className="col-span-1 rounded-xl border border-black/10 bg-white/60 px-2 py-2 text-sm outline-none focus-visible:border-teal-500 dark:border-white/10 dark:bg-white/5"
-                >
-                  {COUNTRY_CODES.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.code}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  required
-                  type="tel"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value.replace(/[^\d]/g, ""))}
-                  placeholder="Numéro de téléphone"
-                  className="col-span-2 rounded-xl border border-black/10 bg-white/60 px-3 py-2 text-sm outline-none focus-visible:border-teal-500 dark:border-white/10 dark:bg-white/5"
-                />
-              </div>
+              <Field label="Téléphone (pour le reçu et le support Chariow)">
+                <div className="grid grid-cols-3 gap-3">
+                  <select
+                    value={countryCode}
+                    onChange={(e) => setCountryCode(e.target.value)}
+                    className={`col-span-1 ${inputClass}`}
+                    aria-label="Indicatif pays"
+                  >
+                    {COUNTRY_CODES.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.code}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    required
+                    type="tel"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value.replace(/[^\d]/g, ""))}
+                    placeholder="77 123 45 67"
+                    className={`col-span-2 ${inputClass}`}
+                  />
+                </div>
+              </Field>
 
               {error && <p className="text-xs text-red-600">{error}</p>}
 

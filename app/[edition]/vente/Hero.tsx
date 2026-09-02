@@ -1,3 +1,5 @@
+import { MapPreview } from "./MapPreview";
+
 export function Hero({ editionName }: { editionName: string }) {
   return (
     <section className="mx-auto max-w-6xl px-6 py-24 text-center md:py-32">
@@ -13,9 +15,8 @@ export function Hero({ editionName }: { editionName: string }) {
       >
         Débloquer l&rsquo;édition
       </a>
-      <div className="mt-16 overflow-hidden rounded-4xl shadow-hero">
-        {/* Remplacer par une capture réelle de la carte, pas une image stock. */}
-        <div className="aspect-[16/10] w-full bg-gradient-to-br from-sky-100 to-emerald-50 dark:from-neutral-900 dark:to-neutral-800" />
+      <div className="mx-auto mt-16 max-w-2xl">
+        <MapPreview />
       </div>
     </section>
   );

@@ -10,7 +10,7 @@
       "years_experience": 20,
       "certified": true,
       "property_count": 27,
-      "photo_url": "/promoteurs/sadio-ibrahima.jpg",
+      "photo_url": "https://picsum.photos/seed/sadio-ibrahima/400/300",
       "about": [
         "Actif dans l'immobilier à Dakar depuis 2006, principalement sur les Almadies et Ngor.",
         "Aucune plainte ni procédure judiciaire recensée à ce jour sur l'ensemble de ses programmes.",
@@ -46,7 +46,7 @@
       "years_experience": 6,
       "certified": false,
       "property_count": 4,
-      "photo_url": "/promoteurs/fatou-ngom.jpg",
+      "photo_url": "https://picsum.photos/seed/fatou-ngom/400/300",
       "about": [
         "Présente sur le marché depuis 2020, principalement via des annonces sur les réseaux sociaux.",
         "Plusieurs acheteurs contactés par la rédaction n'ont pas pu obtenir de titre foncier vérifiable.",
@@ -80,7 +80,7 @@
       "zoom_min_marker": 11,
       "zoom_min_label": 14,
       "summary": "Programme résidentiel de 42 lots, permis de construire délivré en 2025. Aucune irrégularité relevée à ce jour.",
-      "project_photo_url": "/projets/baobab-bay.jpg",
+      "project_photo_url": "https://picsum.photos/seed/baobab-bay/800/600",
       "sources": [
         {
           "category": "officiel",
@@ -97,10 +97,11 @@
       "promoter_id": "promoteur-fatou-ngom",
       "coordinates": { "lat": 14.7502, "lng": -17.5178 },
       "status": "rumeur",
+      "issue_category": "foncier",
       "zoom_min_marker": 12,
       "zoom_min_label": 14,
       "summary": "Plusieurs riverains signalent des ventes de parcelles sans titre foncier clair. Aucune procédure judiciaire ouverte à ce stade.",
-      "project_photo_url": "/projets/ngor-extension.jpg",
+      "project_photo_url": "https://picsum.photos/seed/ngor-extension/800/600",
       "sources": [
         {
           "category": "presse",
@@ -117,10 +118,11 @@
       "promoter_id": "promoteur-fatou-ngom",
       "coordinates": { "lat": 14.7398, "lng": -17.5099 },
       "status": "confirme",
+      "issue_category": "foncier",
       "zoom_min_marker": 10,
       "zoom_min_label": 13,
       "summary": "Procédure judiciaire confirmée pour vente d'un terrain appartenant à l'État. Chantier à l'arrêt depuis janvier 2026.",
-      "project_photo_url": "/projets/jardins-corniche.jpg",
+      "project_photo_url": "https://picsum.photos/seed/jardins-corniche/800/600",
       "sources": [
         {
           "category": "officiel",

@@ -23,7 +23,7 @@ export const EDITIONS: Record<string, Edition> = {
   dakar: {
     id: "dakar",
     name: "Dakar",
-    thumbnailUrl: "/editions/dakar-thumbnail.jpg",
+    thumbnailUrl: "https://picsum.photos/seed/eclaireur-dakar/800/600",
     chariowProductId: process.env.CHARIOW_DAKAR_PRODUCT_ID ?? "dakar-edition",
     zones: dakarZones
   }

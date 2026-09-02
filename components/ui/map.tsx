@@ -55,7 +55,13 @@ export function Map({
   styles,
   children,
   className,
-  cooperativeGestures = true
+  // GARDE-FOU : cooperativeGestures force "il faut deux doigts pour
+  // déplacer la carte" (avec un message à l'écran) — c'est pensé pour une
+  // carte intégrée dans une page qui défile, afin de ne pas capturer le
+  // scroll de la page par erreur. Notre carte est plein écran (jamais de
+  // scroll de page sur cette route, voir CarteClient.tsx), donc un seul
+  // doigt doit suffire pour naviguer, comme Google Maps.
+  cooperativeGestures = false
 }: MapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);

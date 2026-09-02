@@ -29,10 +29,23 @@
   }
 }
 
-/* Focus clavier visible partout, jamais supprimé */
+/* Focus clavier visible partout, jamais supprimé.
+   GARDE-FOU : `outline` ne suit pas border-radius (rendu en rectangle net
+   même sur un élément rounded-full, d'où l'effet "rectangle bleu" cassé
+   visuellement sur la barre de recherche) — `box-shadow` épouse la forme
+   de l'élément, donc on l'utilise à la place. */
 :focus-visible {
-  outline: 2px solid #0a84ff;
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: 0 0 0 2px #0a84ff;
+}
+
+/* Les champs de recherche/formulaire gèrent déjà leur propre indication de
+   focus (bordure teal) — éviter la double indication qui alourdit
+   visuellement des champs déjà arrondis et sur fond verre. */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  box-shadow: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

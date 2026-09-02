@@ -10,7 +10,7 @@
       "years_experience": 12,
       "certified": true,
       "property_count": 15,
-      "photo_url": "/promoteurs/pole-urbain.jpg",
+      "photo_url": "https://picsum.photos/seed/pole-urbain/400/300",
       "about": [
         "Structure publique-privée pilotant l'aménagement du pôle urbain de Diamniadio depuis 2014.",
         "Chaque programme est validé par un dossier d'urbanisme consultable en mairie."
@@ -31,7 +31,7 @@
       "years_experience": 3,
       "certified": false,
       "property_count": 2,
-      "photo_url": "/promoteurs/momo-diallo.jpg",
+      "photo_url": "https://picsum.photos/seed/momo-diallo/400/300",
       "about": [
         "Publicité active sur les réseaux sociaux depuis fin 2025.",
         "Aucun titre de propriété vérifiable communiqué aux acheteurs contactés par la rédaction."
@@ -57,7 +57,7 @@
       "zoom_min_marker": 11,
       "zoom_min_label": 14,
       "summary": "Programme public-privé validé par l'agence du pôle urbain, livraison prévue en phases jusqu'en 2028.",
-      "project_photo_url": "/projets/cite-pole-urbain.jpg",
+      "project_photo_url": "https://picsum.photos/seed/cite-pole-urbain/800/600",
       "sources": [
         {
           "category": "officiel",
@@ -74,10 +74,11 @@
       "promoter_id": "promoteur-momo-diallo",
       "coordinates": { "lat": 14.7302, "lng": -17.1821 },
       "status": "rumeur",
+      "issue_category": "financier",
       "zoom_min_marker": 12,
       "zoom_min_label": 14,
       "summary": "Publicité agressive sur les réseaux sociaux, mais aucun titre de propriété vérifiable communiqué aux acheteurs contactés.",
-      "project_photo_url": "/projets/domaine-les-collines.jpg",
+      "project_photo_url": "https://picsum.photos/seed/domaine-collines/800/600",
       "sources": [
         {
           "category": "presse",

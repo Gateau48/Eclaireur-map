@@ -24,7 +24,10 @@ export const PromoterSchema = z.object({
   years_experience: z.number().int().nonnegative(),
   certified: z.boolean(),
   property_count: z.number().int().nonnegative(),
-  photo_url: z.string(),
+  photo_url: z.string().url(),
+  // Numéro d'immatriculation officiel (RCCM ou équivalent), quand connu —
+  // renforce la vérifiabilité du profil dans l'onglet Promoteur.
+  registration_number: z.string().optional(),
   // Puces factuelles affichées sous "À propos" — jamais un paragraphe brut :
   // chaque puce est une observation vérifiable et sourcée.
   about: z.array(z.string()).min(1),
@@ -33,20 +36,28 @@ export const PromoterSchema = z.object({
   sources: z.array(SourceSchema).min(1)
 });
 
-export const PointSchema = z.object({
-  id: z.string(),
-  name: z.string(), // nom du projet, ex. "Résidence Baobab Bay"
-  promoter_id: z.string(),
-  coordinates: z.object({ lat: z.number(), lng: z.number() }),
-  status: z.enum(["agree", "rumeur", "confirme"]),
-  zoom_min_marker: z.number(),
-  zoom_min_label: z.number(),
-  summary: z.string(),
-  project_photo_url: z.string(),
-  // GARDE-FOU : jamais de projet sans source propre.
-  sources: z.array(SourceSchema).min(1),
-  last_verified: z.string()
-});
+export const PointSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(), // nom du projet, ex. "Résidence Baobab Bay"
+    promoter_id: z.string(),
+    coordinates: z.object({ lat: z.number(), lng: z.number() }),
+    status: z.enum(["agree", "rumeur", "confirme"]),
+    // Nature du problème signalé — voir lib/status.ts. Absent quand
+    // status === "agree" (rien à signaler) ; attendu sinon.
+    issue_category: z.enum(["foncier", "urbanisme", "financier", "livraison"]).optional(),
+    zoom_min_marker: z.number(),
+    zoom_min_label: z.number(),
+    summary: z.string(),
+    project_photo_url: z.string().url(),
+    // GARDE-FOU : jamais de projet sans source propre.
+    sources: z.array(SourceSchema).min(1),
+    last_verified: z.string()
+  })
+  .refine((p) => p.status === "agree" || !!p.issue_category, {
+    message: "issue_category est requis dès que status n'est pas 'agree'",
+    path: ["issue_category"]
+  });
 
 export const ZoneDataSchema = z.object({
   zone_id: z.string(),
@@ -83,23 +94,9 @@ export function parseZoneData(raw: unknown, label: string): ZoneData {
   return data;
 }
 
-export const STATUS_LABELS: Record<Point["status"], string> = {
-  agree: "Agréé",
-  rumeur: "Rumeur non confirmée",
-  confirme: "Confirmé"
-};
-
-export const STATUS_DOT_CLASS: Record<Point["status"], string> = {
-  agree: "bg-emerald-400",
-  rumeur: "bg-amber-400",
-  confirme: "bg-red-400"
-};
-
-export const STATUS_BADGE_CLASS: Record<Point["status"], string> = {
-  agree: "bg-emerald-100 text-emerald-800 dark:bg-emerald-400/20 dark:text-emerald-300",
-  rumeur: "bg-amber-100 text-amber-800 dark:bg-amber-400/20 dark:text-amber-300",
-  confirme: "bg-red-100 text-red-800 dark:bg-red-400/20 dark:text-red-300"
-};
+// Les constantes de statut (libellés, couleurs) vivent dans lib/status.ts,
+// seule source de vérité, référencée depuis le panneau, la carte et la
+// légende — voir lib/status.ts pour les critères de classification.
 
 export const SOURCE_CATEGORY_LABELS: Record<Source["category"], string> = {
   officiel: "Sites officiels",

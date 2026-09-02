@@ -86,6 +86,7 @@ export function SearchBar({ zones, onSelect }: SearchBarProps) {
       <div
         className={cn(
           "glass absolute left-1/2 top-4 z-10 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-full",
+          "transition-shadow focus-within:ring-2 focus-within:ring-teal-500/60",
           isFocused && "hidden md:block"
         )}
       >
