@@ -196,9 +196,7 @@ export const PROJECT_PHASE_LABELS: Record<z.infer<typeof ProjectPhaseSchema>, st
 export const ProjectSchema = z.object({
   id: z.string(),
   name: z.string(),
-  // Absent de la spec initiale mais nécessaire pour le HEADER du panneau
-  // (voir demande explicite : l'image est candidate prioritaire). Comme
-  // tout le reste : absent = pas affiché, jamais un placeholder gris.
+  description: z.string().optional(),
   cover_image_url: z.string().url().optional(),
   gallery: z.array(z.string().url()).optional(),
   location: LocationSchema,
@@ -231,6 +229,7 @@ export const PromoterSchema = z.object({
   id: z.string(),
   name: z.string(),
   legal_name: z.string().optional(),
+  bio: z.string().optional(),
   photo_url: z.string().url().optional(),
   company: z
     .object({

@@ -210,12 +210,24 @@ export function MarkerTooltip({ children }: { children: ReactNode }) {
 
 export function MarkerLabel({
   children,
-  position = "bottom"
+  position = "bottom",
+  className
 }: {
   children: ReactNode;
   position?: "bottom" | "top";
+  className?: string;
 }) {
-  return null;
+  return (
+    <div
+      className={cn(
+        "pointer-events-none whitespace-nowrap text-[11px] font-medium",
+        position === "bottom" ? "mt-1" : "mb-1 order-first",
+        className
+      )}
+    >
+      {children}
+    </div>
+  );
 }
 
 /** Non utilisé pour le détail (voir Partie 2.1 du brief) — fourni pour

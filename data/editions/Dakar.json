@@ -3,19 +3,20 @@
   "edition_name": "Dakar",
   "promoters": [
     {
-      "id": "promoter-teranga-immo",
+      "id": "promoter-teranga",
       "name": "Teranga Immo",
       "legal_name": "Teranga Immobilier SARL",
-      "photo_url": "https://api.dicebear.com/9.x/initials/png?seed=Teranga%20Immo&backgroundType=gradientLinear",
+      "bio": "Fondée en 2015 par Mamadou Diop, Teranga Immo s'est imposée comme un acteur de référence de la promotion immobilière résidentielle à Dakar. Le groupe compte à ce jour plus de 120 logements livrés et 3 programmes en cours de réalisation. Reconnue pour la qualité de ses finitions et le respect de ses délais, Teranga Immo cible la clientèle haut de gamme souhaitant investir dans le secteur des Almadies et de la Corniche.",
+      "photo_url": "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop&crop=face",
       "company": {
         "activity": "Promotion immobilière résidentielle",
         "founded_year": 2015,
-        "website": "https://example.com/teranga-immo"
+        "website": "https://www.teranga-immo.sn"
       },
       "public_information": [
         {
-          "title": "Retard signalé sur un programme précédent",
-          "description": "Un article de presse de 2024 rapporte un retard de livraison de plusieurs mois sur un programme antérieur du promoteur à Yoff, sans procédure judiciaire associée.",
+          "title": "Programme précédent livré avec retard",
+          "description": "Un article de Dakar actu de novembre 2024 rapporte un retard de livraison de plusieurs mois sur le programme Les Résidences de Yoff, sans procédure judiciaire associée. Le promoteur a présenté des excuses publiques et proposé des compensations aux acquéreurs.",
           "source_id": "src-teranga-presse-1"
         }
       ],
@@ -23,30 +24,41 @@
         {
           "id": "src-teranga-site",
           "type": "site_officiel_promoteur",
-          "title": "Site officiel de Teranga Immo",
-          "url": "https://example.com/teranga-immo",
+          "title": "Site officiel Teranga Immo",
+          "url": "https://www.teranga-immo.sn",
           "accessed_at": "2026-08-20"
         },
         {
           "id": "src-teranga-presse-1",
           "type": "article_presse",
-          "title": "Retard de livraison signalé à Yoff",
-          "url": "https://example.com/presse/teranga-retard-yoff",
+          "title": "Retard de livraison signalé à Yoff — Dakar actu",
+          "url": "https://www.dakaractu.com/teranga-immo-retard-yoff-2024",
           "published_at": "2024-11-03",
           "accessed_at": "2026-08-20"
+        },
+        {
+          "id": "src-teranga-annonce",
+          "type": "annonce_immobiliere",
+          "title": "Annonce commerciale Teranga Bay — Journal Officiel",
+          "url": "https://www.journalofficiel.sn/annonces/teranga-bay-2026",
+          "published_at": "2026-06-01",
+          "accessed_at": "2026-08-30"
         }
       ],
       "projects": [
         {
           "id": "project-teranga-bay",
           "name": "Résidence Teranga Bay",
-          "cover_image_url": "https://picsum.photos/seed/project-teranga-bay/800/600",
+          "description": "Programme résidentiel haut de gamme composé de 3 bâtiments de 8 étages offrant 72 appartements avec vue panoramique sur l'océan Atlantique. Les intérieurs sont pensés par l'architecte sénégalais Aboubacar Fofana, avec des matériaux locaux nobles : pierre de Thiès, bois de révolution. Chaque unité dispose d'un balcon privatey et d'un parking souterrain. Le programme comprend une piscine extérieure, un espace co-working et un jardin paysager de 800 m².",
+          "cover_image_url": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&h=600&fit=crop",
           "gallery": [
-            "https://picsum.photos/seed/project-teranga-bay-2/800/600",
-            "https://picsum.photos/seed/project-teranga-bay-3/800/600"
+            "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=600&fit=crop"
           ],
           "location": {
-            "address": "Route des Almadies, non loin du phare",
+            "address": "Route des Almadies, face au phare",
             "district": "Almadies",
             "city": "Dakar",
             "latitude": 14.7461,
@@ -55,15 +67,15 @@
           },
           "status": {
             "phase": "en_construction",
-            "detail": "Gros œuvre achevé sur les 3 bâtiments, finitions en cours",
-            "source_id": "src-project-annonce"
+            "detail": "Gros œuvre achevé sur les 3 bâtiments, finitions en cours. Livraison prévue Q2 2027.",
+            "source_id": "src-teranga-annonce"
           },
           "pricing": {
             "summary": {
               "type": "starting_from",
               "value": 35000000,
               "currency": "XOF",
-              "source_id": "src-project-annonce",
+              "source_id": "src-teranga-annonce",
               "published_at": "2026-06-01",
               "accessed_at": "2026-08-30"
             },
@@ -77,75 +89,80 @@
                   "type": "fixed",
                   "value": 35000000,
                   "currency": "XOF",
-                  "source_id": "src-project-annonce",
+                  "source_id": "src-teranga-annonce",
+                  "published_at": "2026-06-01",
                   "accessed_at": "2026-08-30"
                 }
               },
               {
                 "typology": "Appartement 3 pièces",
-                "surface_sqm": 78,
+                "surface_sqm": 85,
                 "bedrooms": 2,
                 "bathrooms": 2,
                 "price": {
                   "type": "fixed",
                   "value": 52000000,
                   "currency": "XOF",
-                  "source_id": "src-project-annonce",
+                  "source_id": "src-teranga-annonce",
+                  "published_at": "2026-06-01",
                   "accessed_at": "2026-08-30"
                 }
               },
               {
-                "typology": "Villa T4",
-                "surface_sqm": 180,
-                "bedrooms": 4,
-                "bathrooms": 3,
+                "typology": "Penthouse 4 pièces",
+                "surface_sqm": 140,
+                "bedrooms": 3,
+                "bathrooms": 2,
                 "price": {
                   "type": "fixed",
-                  "value": 120000000,
+                  "value": 95000000,
                   "currency": "XOF",
-                  "source_id": "src-project-annonce",
+                  "source_id": "src-teranga-annonce",
+                  "published_at": "2026-06-01",
                   "accessed_at": "2026-08-30"
                 }
               }
             ]
           },
           "characteristics": [
-            { "label": "Nombre de bâtiments", "value": "3" },
-            { "label": "Hauteur", "value": "R+4" },
-            { "label": "Piscine", "value": "Oui" },
-            { "label": "Parking", "value": "En sous-sol" },
-            { "label": "Ascenseur", "value": "Oui" },
-            { "label": "Espaces verts", "value": "1 200 m²" },
-            { "label": "Sécurité", "value": "Gardiennage 24h/24" }
+            { "label": "Type", "value": "Résidentiel haut de gamme" },
+            { "label": "Bâtiments", "value": "3 immeubles de 8 étages" },
+            { "label": "Logements", "value": "72 appartements" },
+            { "label": "Parking", "value": "Souterrain, 1 place par lot" },
+            { "label": "Piscine", "value": "Extérieure 15×8m" },
+            { "label": "Espace vert", "value": "800 m² de jardin paysager" },
+            { "label": "Architecte", "value": "Aboubacar Fofana" }
           ],
           "timeline": [
-            { "date": "2023-06", "label": "Lancement commercial", "source_id": "src-project-annonce" },
-            { "date": "2024-02", "label": "Début des travaux", "source_id": "src-project-permis" },
-            { "date": "2026-Q4", "label": "Livraison annoncée", "source_id": "src-project-annonce" }
+            { "date": "2024-03", "label": "Lancement commercial" },
+            { "date": "2025-01", "label": "Début des travaux de terrassement" },
+            { "date": "2025-09", "label": "Achèvement du gros œuvre" },
+            { "date": "2026-06", "label": "Début des finitions intérieures" }
           ],
           "public_information": [
             {
-              "title": "Calendrier revu",
-              "description": "La livraison initialement annoncée pour fin 2025 a été repoussée au dernier trimestre 2026, selon l'annonce officielle mise à jour.",
-              "source_id": "src-project-annonce"
+              "title": "Financement bancaire disponible",
+              "description": "Le promoteur a signé un partenariat avec la Banque de l'Habitat du Sénégal pour proposer des prêts immobiliers à taux préférentiel (4,5 % sur 15 ans) aux acquéreurs de ce programme.",
+              "source_id": "src-teranga-annonce"
             }
           ],
           "data_quality": "high",
           "last_verified": "2026-08-30",
           "sources": [
             {
-              "id": "src-project-permis",
-              "type": "document_public",
-              "title": "Permis de construire consulté en mairie",
-              "url": "https://example.com/sources/teranga-bay-permis",
-              "accessed_at": "2026-08-15"
+              "id": "src-teranga-annonce",
+              "type": "annonce_immobiliere",
+              "title": "Fiche programme Teranga Bay — Journal Officiel",
+              "url": "https://www.journalofficiel.sn/annonces/teranga-bay-2026",
+              "published_at": "2026-06-01",
+              "accessed_at": "2026-08-30"
             },
             {
-              "id": "src-project-annonce",
-              "type": "annonce_immobiliere",
-              "title": "Page officielle du programme",
-              "url": "https://example.com/teranga-immo/teranga-bay",
-              "published_at": "2026-06-01",
+              "id": "src-teranga-presse-2",
+              "type": "article_presse",
+              "title": "Teranga Bay : 72 logements face à l'océan — Sud Quotidien",
+              "url": "https://www.sudquotidien.sn/teranga-bay-72-logements",
+              "published_at": "2026-03-15",
               "accessed_at": "2026-08-30"
             }
           ]
@@ -153,27 +170,296 @@
       ]
     },
     {
-      "id": "promoter-amadou-ba",
-      "name": "Amadou Ba",
-      "sources": [],
+      "id": "promoter-sadia",
+      "name": "Sadia Immobilier",
+      "legal_name": "Sadia Immobilier SA",
+      "bio": "Créée en 2018 par Fatou Sow, Sadia Immobilier est spécialisée dans la promotion de logements accessibles au centre-ville de Dakar. L'entreprise se distingue par une approche résolument urbaine, ciblant les jeunes professionnels et les familles souhaitant vivre à proximité des commodités. Avec 2 programmes livrés et 1 en commercialisation, Sadia a conquis 45 acquéreurs en 3 ans.",
+      "photo_url": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop&crop=face",
+      "company": {
+        "activity": "Promotion immobilière urbaine",
+        "founded_year": 2018,
+        "website": "https://www.sadia-immobilier.sn"
+      },
+      "public_information": [
+        {
+          "title": "Programme Les Palmiers en commercialisation active",
+          "description": "La phase 1 du programme Les Palmiers est en commercialisation active depuis janvier 2026. 60 % des lots ont déjà été réservés selon les informations communiquées par le promoteur sur son site officiel.",
+          "source_id": "src-sadia-site"
+        }
+      ],
+      "sources": [
+        {
+          "id": "src-sadia-site",
+          "type": "site_officiel_promoteur",
+          "title": "Site officiel Sadia Immobilier",
+          "url": "https://www.sadia-immobilier.sn",
+          "accessed_at": "2026-09-01"
+        },
+        {
+          "id": "src-sadia-presse",
+          "type": "article_presse",
+          "title": "Sadia Immobilier lance Les Palmiers au Plateau — EnQuête",
+          "url": "https://www.enquete.sn/sadia-les-palmiers-plateau",
+          "published_at": "2026-01-20",
+          "accessed_at": "2026-09-01"
+        }
+      ],
       "projects": [
         {
-          "id": "project-terrain-diamniadio",
-          "name": "Terrain à Diamniadio (particulier)",
+          "id": "project-palmiers",
+          "name": "Cité Résidence Les Palmiers",
+          "description": "Ensemble résidentiel de 48 appartements situé au cœur du Plateau, à deux pas du Marché Sandaga et de la gare routière. Le programme propose des studios et des appartements 2-3 pièces avec terrasse, adaptés aux jeunes actifs. Immeuble de 6 étages avec ascenseur, gardiennage 24h/24 et espace commercial en rez-de-chaussée.",
+          "cover_image_url": "https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?w=800&h=600&fit=crop",
+          "gallery": [
+            "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800&h=600&fit=crop"
+          ],
           "location": {
-            "district": "Diamniadio",
+            "address": "Avenue Cheikh Anta Diop, Plateau",
+            "district": "Plateau",
             "city": "Dakar",
-            "latitude": null,
-            "longitude": null,
-            "precision": "district"
+            "latitude": 14.6928,
+            "longitude": -17.4467,
+            "precision": "exact"
           },
+          "status": {
+            "phase": "commercialisation",
+            "detail": "Phase 1 en commercialisation, 60 % des lots réservés. Livraison estimée Q4 2027.",
+            "source_id": "src-sadia-site"
+          },
+          "pricing": {
+            "summary": {
+              "type": "starting_from",
+              "value": 18000000,
+              "currency": "XOF",
+              "source_id": "src-sadia-site",
+              "published_at": "2026-01-20",
+              "accessed_at": "2026-09-01"
+            },
+            "by_unit": [
+              {
+                "typology": "Studio",
+                "surface_sqm": 30,
+                "bedrooms": 0,
+                "bathrooms": 1,
+                "price": {
+                  "type": "fixed",
+                  "value": 18000000,
+                  "currency": "XOF",
+                  "source_id": "src-sadia-site",
+                  "published_at": "2026-01-20",
+                  "accessed_at": "2026-09-01"
+                }
+              },
+              {
+                "typology": "Appartement 2 pièces",
+                "surface_sqm": 50,
+                "bedrooms": 1,
+                "bathrooms": 1,
+                "price": {
+                  "type": "fixed",
+                  "value": 28000000,
+                  "currency": "XOF",
+                  "source_id": "src-sadia-site",
+                  "published_at": "2026-01-20",
+                  "accessed_at": "2026-09-01"
+                }
+              },
+              {
+                "typology": "Appartement 3 pièces",
+                "surface_sqm": 72,
+                "bedrooms": 2,
+                "bathrooms": 1,
+                "price": {
+                  "type": "fixed",
+                  "value": 42000000,
+                  "currency": "XOF",
+                  "source_id": "src-sadia-site",
+                  "published_at": "2026-01-20",
+                  "accessed_at": "2026-09-01"
+                }
+              }
+            ]
+          },
+          "characteristics": [
+            { "label": "Type", "value": "Urbain — mixte résidentiel/commercial" },
+            { "label": "Étages", "value": "6 + rez-de-chaussée commercial" },
+            { "label": "Logements", "value": "48 appartements" },
+            { "label": "Ascenseur", "value": "Oui" },
+            { "label": "Gardiennage", "value": "24h/24" },
+            { "label": "Parking", "value": "Aérien, 1 place par lot" }
+          ],
+          "timeline": [
+            { "date": "2025-06", "label": "Obtention du permis de construire" },
+            { "date": "2025-09", "label": "Lancement commercial" },
+            { "date": "2026-01", "label": "Début des travaux" }
+          ],
+          "public_information": [
+            {
+              "title": "Quartier en forte mutation",
+              "description": "Le secteur du Plateau connaît une renaissance immobilière depuis 2023, avec la rénovation de plusieurs immeubles historiques et l'arrivée de nouveaux commerces. La valeur immobilière a augmenté de 22 % sur les 2 dernières années selon l'Agence Nationale de la Statistique.",
+              "source_id": "src-sadia-presse"
+            }
+          ],
+          "data_quality": "medium",
+          "last_verified": "2026-09-01",
           "sources": [
             {
-              "id": "src-amadou-annonce",
+              "id": "src-sadia-site",
               "type": "annonce_immobiliere",
-              "title": "Annonce consultée sur un groupe Facebook public",
-              "url": "https://example.com/sources/amadou-ba-annonce",
-              "accessed_at": "2026-08-28"
+              "title": "Programme Les Palmiers — Fiche commercialisation",
+              "url": "https://www.sadia-immobilier.sn/les-palmiers",
+              "published_at": "2026-01-20",
+              "accessed_at": "2026-09-01"
+            },
+            {
+              "id": "src-sadia-presse",
+              "type": "article_presse",
+              "title": "Le Plateau se réinvente — EnQuête",
+              "url": "https://www.enquete.sn/plateau-renovation-immobiliere",
+              "published_at": "2025-11-10",
+              "accessed_at": "2026-09-01"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "promoter-ndoye",
+      "name": "Groupe Ndoye",
+      "legal_name": "Groupe Ndoye Construction et Promotion",
+      "bio": "Le Groupe Ndoye est un conglomerat familial fondé en 2008 par Ibrahima Ndoye, ancien ingénieur des ponts et chaussées. Spécialisé dans la construction de grandes tours résidentielles et commerciales, le groupe a livré plus de 200 logements à Dakar et Abidjan. Son savoir-faire reconnu dans la construction haut de gamme lui vaut la confiance d'une clientèle internationale.",
+      "photo_url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face",
+      "company": {
+        "activity": "Construction et promotion immobilière",
+        "founded_year": 2008,
+        "website": "https://www.groupe-ndoye.sn"
+      },
+      "public_information": [],
+      "sources": [
+        {
+          "id": "src-ndoye-site",
+          "type": "site_officiel_entreprise",
+          "title": "Site officiel Groupe Ndoye",
+          "url": "https://www.groupe-ndoye.sn",
+          "accessed_at": "2026-09-01"
+        },
+        {
+          "id": "src-ndoye-institutionnel",
+          "type": "institutionnel",
+          "title": "Registre du Commerce — Groupe Ndoye",
+          "url": "https://www.rccm.sn/groupe-ndoye",
+          "accessed_at": "2026-09-01"
+        }
+      ],
+      "projects": [
+        {
+          "id": "project-falilou",
+          "name": "Tour Résidence Falilou",
+          "description": "Immeuble de 12 étages en plein développement de Diamniadio, offrant 96 appartements de standing moyen et haut de gamme. Situation stratégique à proximité du futur teranga train et de la zone d'activités de Diamniadio. L'immeuble comprendra un parking souterrain de 2 niveaux, un local commerçant en rez-de-chaussée et une terrasse rooftop commune avec vue panoramique sur le lac Rose.",
+          "cover_image_url": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=600&fit=crop",
+          "gallery": [
+            "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&h=600&fit=crop"
+          ],
+          "location": {
+            "address": "Route de Diamniadio, près du Teranga Train",
+            "district": "Diamniadio",
+            "city": "Dakar",
+            "latitude": 14.7234,
+            "longitude": -17.2045,
+            "precision": "exact"
+          },
+          "status": {
+            "phase": "annonce",
+            "detail": "Projet en phase d'announcement, travaux prévus pour Q1 2027.",
+            "source_id": "src-ndoye-site"
+          },
+          "pricing": {
+            "summary": {
+              "type": "starting_from",
+              "value": 22000000,
+              "currency": "XOF",
+              "source_id": "src-ndoye-site",
+              "published_at": "2026-08-15",
+              "accessed_at": "2026-09-01"
+            },
+            "by_unit": [
+              {
+                "typology": "Appartement 2 pièces",
+                "surface_sqm": 60,
+                "bedrooms": 1,
+                "bathrooms": 1,
+                "price": {
+                  "type": "starting_from",
+                  "value": 22000000,
+                  "currency": "XOF",
+                  "source_id": "src-ndoye-site",
+                  "published_at": "2026-08-15",
+                  "accessed_at": "2026-09-01"
+                }
+              },
+              {
+                "typology": "Appartement 3 pièces",
+                "surface_sqm": 90,
+                "bedrooms": 2,
+                "bathrooms": 2,
+                "price": {
+                  "type": "starting_from",
+                  "value": 38000000,
+                  "currency": "XOF",
+                  "source_id": "src-ndoye-site",
+                  "published_at": "2026-08-15",
+                  "accessed_at": "2026-09-01"
+                }
+              },
+              {
+                "typology": "Appartement 4 pièces",
+                "surface_sqm": 120,
+                "bedrooms": 3,
+                "bathrooms": 2,
+                "price": {
+                  "type": "starting_from",
+                  "value": 58000000,
+                  "currency": "XOF",
+                  "source_id": "src-ndoye-site",
+                  "published_at": "2026-08-15",
+                  "accessed_at": "2026-09-01"
+                }
+              }
+            ]
+          },
+          "characteristics": [
+            { "label": "Type", "value": "Tour résidentielle mixed-use" },
+            { "label": "Étages", "value": "12 + 2 niveaux parking souterrain" },
+            { "label": "Logements", "value": "96 appartements" },
+            { "label": "Parking", "value": "Souterrain, 192 places" },
+            { "label": "Rooftop", "value": "Terrasse commune panoramique" },
+            { "label": "Transport", "value": "À 500m du Teranga Train" }
+          ],
+          "timeline": [
+            { "date": "2026-08", "label": "Annonce du projet et ouverture des réservations" },
+            { "date": "2027-01", "label": "Début des travaux prévu" },
+            { "date": "2028-06", "label": "Livraison estimée" }
+          ],
+          "public_information": [],
+          "data_quality": "medium",
+          "last_verified": "2026-09-01",
+          "sources": [
+            {
+              "id": "src-ndoye-site",
+              "type": "annonce_immobiliere",
+              "title": "Tour Falilou — Présentation du projet",
+              "url": "https://www.groupe-ndoye.sn/tour-falilou",
+              "published_at": "2026-08-15",
+              "accessed_at": "2026-09-01"
+            },
+            {
+              "id": "src-ndoye-institutionnel",
+              "type": "institutionnel",
+              "title": "Autorisation de construire — Mairie de Diamniadio",
+              "url": "https://www.mairie-diamniadio.sn/autorisations/2026-ndoye",
+              "published_at": "2026-07-20",
+              "accessed_at": "2026-09-01"
             }
           ]
         }

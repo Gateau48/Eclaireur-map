@@ -63,7 +63,7 @@ export function SearchBar({ editionId, onSelect, hidden }: SearchBarProps) {
     <>
       <div
         className={cn(
-          "absolute left-1/2 top-4 z-10 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 overflow-hidden bg-white shadow-lg",
+          "absolute left-1/2 top-4 z-30 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 overflow-hidden bg-white shadow-lg",
           "transition-[border-radius,box-shadow] duration-150",
           hasDropdown ? "rounded-3xl" : "rounded-full",
           "focus-within:shadow-xl",

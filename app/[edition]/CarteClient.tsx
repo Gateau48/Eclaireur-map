@@ -6,16 +6,18 @@ import {
   MapControls,
   MapMarker,
   MarkerContent,
+  MarkerLabel,
   MarkerTooltip,
   useMap
 } from "@/components/ui/map";
 import { SearchBar } from "@/components/SearchBar";
+import { MapLegend } from "@/components/MapLegend";
 import type { SearchApiResult } from "@/app/api/search/[edition]/route";
 import { DetailPanel, PANEL_SNAP_POINTS } from "@/components/DetailPanel";
 import { clusterItems, type Clusterable } from "@/lib/clustering";
 import { findProjectAndPromoter, type PanelView } from "@/lib/panel-view";
 import { PHASE_MARKER_COLOR } from "@/lib/status";
-import type { EditionData, Project } from "@/lib/schema";
+import { PROJECT_PHASE_LABELS, type EditionData, type Project } from "@/lib/schema";
 import { cn } from "@/lib/utils";
 
 interface MarkerPoint extends Clusterable {
@@ -91,6 +93,8 @@ export function CarteClient({ edition }: { edition: EditionData }) {
         hidden={snap === PANEL_SNAP_POINTS[2]}
       />
 
+      <MapLegend className="absolute bottom-20 left-4 z-10 md:bottom-6" />
+
       <DetailPanel
         view={view}
         canGoBack={stack.length > 1}
@@ -163,14 +167,24 @@ function MarkerLayer({ points, onSelect }: { points: MarkerPoint[]; onSelect: (p
   );
 }
 
+const PHASE_TEXT_COLOR: Record<string, string> = {
+  annonce: "text-sky-600",
+  commercialisation: "text-emerald-600",
+  en_construction: "text-amber-600",
+  livre: "text-neutral-600",
+  suspendu: "text-red-600",
+  inconnu: "text-neutral-400"
+};
+
 function SingleMarker({ point, onSelect }: { point: MarkerPoint; onSelect: (projectId: string) => void }) {
   const phase = point.project.status?.phase ?? "inconnu";
   const colorClass = PHASE_MARKER_COLOR[phase];
+  const textColor = PHASE_TEXT_COLOR[phase] ?? "text-neutral-500";
 
   return (
     <MapMarker longitude={point.coordinates.lng} latitude={point.coordinates.lat}>
       <MarkerContent>
-        <div className="group relative">
+        <div className="group relative flex flex-col items-center">
           <button
             type="button"
             onClick={() => onSelect(point.id)}
@@ -181,6 +195,7 @@ function SingleMarker({ point, onSelect }: { point: MarkerPoint; onSelect: (proj
               colorClass
             )}
           />
+          <MarkerLabel className={textColor}>{point.project.name}</MarkerLabel>
           <MarkerTooltip>{point.project.name}</MarkerTooltip>
         </div>
       </MarkerContent>
