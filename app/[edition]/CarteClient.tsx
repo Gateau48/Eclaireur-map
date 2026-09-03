@@ -16,7 +16,6 @@ import { StatusLegend } from "@/components/StatusLegend";
 import { type PanelView, findProjectAndPromoter, findPromoterById } from "@/lib/panelview";
 import { PHASE_SOLID_CLASS } from "@/lib/status";
 import { clusterItems, type Cluster, type Clusterable } from "@/lib/clustering";
-import type { Edition } from "@/lib/editions";
 import type { EditionData, Project, Promoter } from "@/lib/schema";
 import { cn } from "@/lib/utils";
 
@@ -25,45 +24,24 @@ interface MapProject extends Clusterable {
   promoter: Promoter;
 }
 
-export function CarteClient({ edition }: { edition: Edition }) {
-  const [editionData, setEditionData] = useState<EditionData | null>(null);
+export function CarteClient({ editionData }: { editionData: EditionData }) {
   const [panelHistory, setPanelHistory] = useState<PanelView[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     document.body.classList.add("map-route");
     return () => document.body.classList.remove("map-route");
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(`/api/search/${edition.id}`);
-        if (!res.ok) throw new Error("Failed to fetch edition data");
-        const data: EditionData = await res.json();
-        if (!cancelled) setEditionData(data);
-      } catch (err) {
-        console.error("Failed to load edition data:", err);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [edition.id]);
-
   const currentView: PanelView | null = panelHistory.length > 0 ? panelHistory[panelHistory.length - 1] : null;
   const canGoBack = panelHistory.length > 1;
 
   function openProject(projectId: string) {
-    if (!editionData) return;
     const result = findProjectAndPromoter(editionData, projectId);
     if (!result) return;
     setPanelHistory((h) => [...h, { type: "project", project: result.project, promoter: result.promoter }]);
   }
 
   function openPromoter(promoterId: string) {
-    if (!editionData) return;
     const promoter = findPromoterById(editionData, promoterId);
     if (!promoter) return;
     setPanelHistory((h) => [...h, { type: "promoter", promoter }]);
@@ -78,7 +56,6 @@ export function CarteClient({ edition }: { edition: Edition }) {
   }
 
   const allMapProjects: MapProject[] = useMemo(() => {
-    if (!editionData) return [];
     return editionData.promoters.flatMap((promoter) =>
       promoter.projects
         .filter((p) => p.location.latitude !== null && p.location.longitude !== null)
@@ -104,14 +81,6 @@ export function CarteClient({ edition }: { edition: Edition }) {
     } else {
       openPromoter(result.promoter.id);
     }
-  }
-
-  if (loading || !editionData) {
-    return (
-      <div className="absolute inset-0 flex items-center justify-center bg-neutral-100 dark:bg-neutral-900">
-        <p className="text-sm text-neutral-500">Chargement…</p>
-      </div>
-    );
   }
 
   return (
