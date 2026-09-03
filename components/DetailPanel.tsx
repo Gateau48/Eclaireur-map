@@ -21,6 +21,7 @@ import {
   PROJECT_PHASE_LABELS,
   SOURCE_TYPE_LABELS,
   type Project,
+  type ProjectPhase,
   type Promoter,
   type Source
 } from "@/lib/schema";
@@ -101,7 +102,7 @@ export function DetailPanel({
   const statusLabel = statusPhase ? PROJECT_PHASE_LABELS[statusPhase] : undefined;
   const statusColor = statusPhase ? PHASE_TAG_COLOR[statusPhase] : undefined;
 
-  const showTabBar = !isPeek && view?.type === "project";
+  const showTabBar = isFull && view?.type === "project";
   const titleTruncated = headerCollapsed || isPeek;
 
   return (
@@ -191,7 +192,7 @@ export function DetailPanel({
               ref={scrollRef}
               onScroll={handleContentScroll}
               className="flex-1 overflow-y-auto scroll-hidden"
-              style={{ touchAction: "pan-y" }}
+              style={{ touchAction: "pan-y", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
             >
               <ProjectView
                 project={view.project}
@@ -211,7 +212,7 @@ export function DetailPanel({
               ref={scrollRef}
               onScroll={handleContentScroll}
               className="flex-1 overflow-y-auto scroll-hidden"
-              style={{ touchAction: "pan-y" }}
+              style={{ touchAction: "pan-y", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
             >
               <PromoterView
                 promoter={view.promoter}
@@ -375,27 +376,25 @@ function ProjectView({
 
   return (
     <div>
-      {/* Photos GRANDES — grid 2 colonnes, aspect 3/4, bien visibles */}
+      {/* Photos GRANDES — carousel horizontal, bien visibles */}
       {photos.length > 0 && (
-        <div className="px-4 pt-2 pb-4">
-          <div className="grid grid-cols-2 gap-3">
-            {photos.slice(0, 4).map((src, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => onPhotoClick(src, `${project.name} — photo ${i + 1}`, i, allPhotoObjects)}
-                className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-neutral-200"
-              >
-                <Image
-                  src={src}
-                  alt={`${project.name} — photo ${i + 1}`}
-                  fill
-                  sizes="220px"
-                  className="object-cover"
-                />
-              </button>
-            ))}
-          </div>
+        <div className="flex gap-3 overflow-x-auto scroll-hidden snap-x snap-mandatory px-4 pt-2 pb-4">
+          {photos.slice(0, 6).map((src, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => onPhotoClick(src, `${project.name} — photo ${i + 1}`, i, allPhotoObjects)}
+              className="relative w-[75%] shrink-0 snap-center aspect-[4/3] overflow-hidden rounded-2xl bg-neutral-200"
+            >
+              <Image
+                src={src}
+                alt={`${project.name} — photo ${i + 1}`}
+                fill
+                sizes="300px"
+                className="object-cover"
+              />
+            </button>
+          ))}
         </div>
       )}
 
@@ -440,11 +439,11 @@ function ProjectView({
         </div>
 
         {tab === "apercu" && (
-          <ApercuTab project={project} />
+          <ApercuTab project={project} phase={project.status?.phase} />
         )}
 
         {tab === "prix" && (
-          <PrixTab project={project} />
+          <PrixTab project={project} phase={project.status?.phase} />
         )}
 
         {tab === "promoteur" && (
@@ -478,17 +477,19 @@ const TAB_LABELS: Record<ProjectTab, string> = {
 // Onglet Aperçu
 // ---------------------------------------------------------------------------
 
-function ApercuTab({ project }: { project: Project }) {
+function ApercuTab({ project, phase }: { project: Project; phase?: ProjectPhase }) {
+  const sectionColor = phase ? PHASE_SECTION_COLOR[phase] : undefined;
+
   return (
     <div className="space-y-5 pt-1">
       {project.description && (
-        <Section title={`A propos de ${project.name.split(" ")[0]}...`} icon={<Info className="h-4 w-4" />}>
+        <Section title={`A propos de ${project.name.split(" ")[0]}...`} icon={<Info className="h-4 w-4" />} colorClass={sectionColor}>
           <p className="text-sm leading-relaxed text-neutral-700">{project.description}</p>
         </Section>
       )}
 
       {project.characteristics && project.characteristics.length > 0 && (
-        <Section title="Caractéristiques" icon={<Target className="h-4 w-4" />}>
+        <Section title="Caractéristiques" icon={<Target className="h-4 w-4" />} colorClass={sectionColor}>
           <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5">
             {project.characteristics.map((c) => (
               <div key={c.label}>
@@ -501,7 +502,7 @@ function ApercuTab({ project }: { project: Project }) {
       )}
 
       {project.timeline && project.timeline.length > 0 && (
-        <Section title="Historique" icon={<Info className="h-4 w-4" />}>
+        <Section title="Historique" icon={<Info className="h-4 w-4" />} colorClass={sectionColor}>
           <ol className="space-y-3">
             {project.timeline.map((entry, i) => (
               <li key={i} className="flex gap-3">
@@ -514,7 +515,7 @@ function ApercuTab({ project }: { project: Project }) {
       )}
 
       {project.public_information && project.public_information.length > 0 && (
-        <Section title="À savoir" icon={<Info className="h-4 w-4" />}>
+        <Section title="À savoir" icon={<Info className="h-4 w-4" />} colorClass={sectionColor}>
           <PublicInfoList items={project.public_information} />
         </Section>
       )}
@@ -528,19 +529,20 @@ function ApercuTab({ project }: { project: Project }) {
 // Onglet Prix
 // ---------------------------------------------------------------------------
 
-function PrixTab({ project }: { project: Project }) {
+function PrixTab({ project, phase }: { project: Project; phase?: ProjectPhase }) {
+  const sectionColor = phase ? PHASE_SECTION_COLOR[phase] : undefined;
   const priceLabel = project.pricing?.summary ? formatPrice(project.pricing.summary) : null;
 
   return (
     <div className="space-y-5 pt-1">
       {priceLabel && (
-        <Section title="À propos du prix" icon={<Info className="h-4 w-4" />}>
+        <Section title="À propos du prix" icon={<Info className="h-4 w-4" />} colorClass={sectionColor}>
           <p className="text-2xl font-semibold">{priceLabel}</p>
         </Section>
       )}
 
       {project.pricing?.by_unit && project.pricing.by_unit.length > 0 && (
-        <Section title="Units" icon={<Target className="h-4 w-4" />}>
+        <Section title="Units" icon={<Target className="h-4 w-4" />} colorClass={sectionColor}>
           <UnitsList units={project.pricing.by_unit} />
         </Section>
       )}
@@ -643,18 +645,18 @@ function PromoterInline({
 
       {/* Bio + photo côte à côte */}
       {(promoter.bio || promoter.photo_url) && (
-        <div className="grid grid-cols-[120px_1fr] gap-4">
+        <div className="grid grid-cols-[140px_1fr] gap-4">
           {promoter.photo_url && (
             <button
               type="button"
               onClick={() => promoter.photo_url && onPhotoClick(promoter.photo_url, promoter.name, 0, promoterPhotos)}
-              className="relative aspect-square overflow-hidden rounded-2xl bg-neutral-200"
+              className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-neutral-200"
             >
-              <Image src={promoter.photo_url} alt={promoter.name} fill sizes="120px" className="object-cover" />
+              <Image src={promoter.photo_url} alt={promoter.name} fill sizes="140px" className="object-cover" />
             </button>
           )}
           {promoter.bio && (
-            <div className="rounded-xl bg-white p-3">
+            <div className="overflow-y-auto rounded-xl bg-white p-3">
               <p className="mb-1 text-sm font-semibold text-teal-700">A propos du promoteur</p>
               <p className="text-sm leading-relaxed text-neutral-600">{promoter.bio}</p>
             </div>
@@ -727,7 +729,7 @@ function PromoterView({
   onPhotoClick: (src: string, alt: string, index: number, all: { src: string; alt: string }[]) => void;
 }) {
   return (
-    <div className="px-4 pb-8 pt-2">
+    <div className="px-4 pb-8 pt-2" style={{ paddingBottom: "calc(2rem + env(safe-area-inset-bottom, 0px))" }}>
       <PromoterInline promoter={promoter} onOpenProject={onOpenProject} onPhotoClick={onPhotoClick} />
     </div>
   );
@@ -737,11 +739,20 @@ function PromoterView({
 // Composants partagés
 // ---------------------------------------------------------------------------
 
-function Section({ title, icon, children }: { title?: string; icon?: React.ReactNode; children: React.ReactNode }) {
+const PHASE_SECTION_COLOR: Record<ProjectPhase, string> = {
+  annonce: "text-sky-600",
+  commercialisation: "text-emerald-600",
+  en_construction: "text-amber-600",
+  livre: "text-neutral-600",
+  suspendu: "text-red-600",
+  inconnu: "text-teal-700"
+};
+
+function Section({ title, icon, colorClass, children }: { title?: string; icon?: React.ReactNode; colorClass?: string; children: React.ReactNode }) {
   return (
     <div className="border-t border-neutral-200 pt-4 first:border-none first:pt-0">
       {title && (
-        <h3 className="mb-2.5 flex items-center gap-1.5 text-sm font-semibold text-teal-700">
+        <h3 className={cn("mb-2.5 flex items-center gap-1.5 text-sm font-semibold", colorClass ?? "text-teal-700")}>
           {icon}
           {title}
         </h3>

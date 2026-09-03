@@ -15,7 +15,7 @@ import { MapLegend } from "@/components/MapLegend";
 import type { SearchApiResult } from "@/app/api/search/[edition]/route";
 import { DetailPanel, PANEL_SNAP_POINTS } from "@/components/DetailPanel";
 import { clusterItems, type Clusterable } from "@/lib/clustering";
-import { findProjectAndPromoter, type PanelView } from "@/lib/panel-view";
+import { findProjectAndPromoter, findPromoterById, type PanelView } from "@/lib/panel-view";
 import { PHASE_MARKER_COLOR } from "@/lib/status";
 import { PROJECT_PHASE_LABELS, type EditionData, type Project } from "@/lib/schema";
 import { cn } from "@/lib/utils";
@@ -75,7 +75,11 @@ export function CarteClient({ edition }: { edition: EditionData }) {
     if (result.kind === "project" && result.projectId) {
       openProject(result.projectId);
     } else {
-      openProject(result.promoterId);
+      const promoter = findPromoterById(edition, result.promoterId);
+      if (!promoter) return;
+      const nextView: PanelView = { type: "promoter", promoter };
+      setStack([nextView]);
+      setSnap(PANEL_SNAP_POINTS[1]);
     }
   }
 
@@ -93,7 +97,7 @@ export function CarteClient({ edition }: { edition: EditionData }) {
         hidden={snap === PANEL_SNAP_POINTS[2]}
       />
 
-      <MapLegend className="absolute bottom-20 left-4 z-10 md:bottom-6" />
+      <MapLegend className="absolute bottom-28 left-4 z-10 md:bottom-6" />
 
       <DetailPanel
         view={view}
