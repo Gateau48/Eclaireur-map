@@ -9,23 +9,25 @@
   }
 
   body {
-    @apply font-sans text-neutral-900 dark:text-neutral-50 dark:bg-neutral-950 antialiased;
+    @apply font-sans text-neutral-900 antialiased;
   }
 
-  /* Les routes carte (/[edition]) désactivent le scroll de page : la carte
-     gère son propre déplacement via ses gestes. Voir app/[edition]/layout.tsx */
   body.map-route {
     overflow: hidden;
   }
 }
 
 @layer components {
-  /* La "classe verre" — une seule définition, réutilisée partout
-     (nav au scroll, barre de recherche, boutons de zoom, panneau
-     de détail, cartes du tableau de bord). */
   .glass {
-    @apply bg-white/65 dark:bg-neutral-900/65 backdrop-blur-2xl backdrop-saturate-150
-      border border-white/30 dark:border-white/10 shadow-glass;
+    @apply bg-white shadow-glass;
+  }
+
+  .scroll-hidden::-webkit-scrollbar {
+    display: none;
+  }
+  .scroll-hidden {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
 

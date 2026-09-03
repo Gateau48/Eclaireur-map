@@ -27,7 +27,6 @@ import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
 const DEFAULT_LIGHT_STYLE = "https://tiles.openfreemap.org/styles/positron";
-const DEFAULT_DARK_STYLE = "https://tiles.openfreemap.org/styles/dark-matter";
 
 interface MapContextValue {
   map: MapLibreMap | null;
@@ -65,28 +64,15 @@ export function Map({
 }: MapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
-  const [, setMounted] = useState(false); // force re-render une fois la carte prête
+  const [, setMounted] = useState(false);
   const [zoomState, setZoomState] = useState(zoom);
-  const [isDark, setIsDark] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    setIsDark(mq.matches);
-    const onChange = (e: MediaQueryListEvent) => setIsDark(e.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
-    // Fond CARTO gratuit sans clé API, adapté automatiquement dark/clair
-    // — sauf si `styles` est fourni explicitement (voir Partie 4 du brief).
-    const styleUrl = styles ?? (isDark ? DEFAULT_DARK_STYLE : DEFAULT_LIGHT_STYLE);
-
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: styleUrl,
+      style: styles ?? DEFAULT_LIGHT_STYLE,
       center,
       zoom,
       cooperativeGestures,
@@ -112,12 +98,6 @@ export function Map({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Re-thème si le mode change et qu'aucun style custom n'est fourni.
-  useEffect(() => {
-    if (!mapRef.current || styles) return;
-    mapRef.current.setStyle(isDark ? DEFAULT_DARK_STYLE : DEFAULT_LIGHT_STYLE);
-  }, [isDark, styles]);
-
   return (
     <MapContext.Provider value={{ map: mapRef.current, zoom: zoomState }}>
       {/* Couche 0 — le canevas carte remplit tout l'écran, ne bouge jamais
@@ -142,7 +122,7 @@ export function MapControls({
   return (
     <div
       className={cn(
-        "glass flex flex-col overflow-hidden rounded-2xl",
+        "flex flex-col overflow-hidden rounded-2xl bg-white shadow-glass",
         className
       )}
       role="group"
@@ -152,16 +132,16 @@ export function MapControls({
         type="button"
         onClick={() => map.zoomIn()}
         aria-label="Zoomer"
-        className="flex h-11 w-11 items-center justify-center text-lg font-medium hover:bg-black/5 dark:hover:bg-white/10 md:h-9 md:w-9"
+        className="flex h-11 w-11 items-center justify-center text-lg font-medium hover:bg-neutral-100 md:h-9 md:w-9"
       >
         +
       </button>
-      <div className="h-px w-full bg-black/10 dark:bg-white/10" />
+      <div className="h-px w-full bg-neutral-100" />
       <button
         type="button"
         onClick={() => map.zoomOut()}
         aria-label="Dézoomer"
-        className="flex h-11 w-11 items-center justify-center text-lg font-medium hover:bg-black/5 dark:hover:bg-white/10 md:h-9 md:w-9"
+        className="flex h-11 w-11 items-center justify-center text-lg font-medium hover:bg-neutral-100 md:h-9 md:w-9"
       >
         −
       </button>
@@ -219,8 +199,8 @@ export function MarkerContent({ children }: { children: ReactNode }) {
 export function MarkerTooltip({ children }: { children: ReactNode }) {
   return (
     <div
-      className="glass pointer-events-none absolute left-1/2 top-full mt-1.5 -translate-x-1/2
-        whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium opacity-0
+      className="pointer-events-none absolute left-1/2 top-full mt-1.5 -translate-x-1/2
+        whitespace-nowrap rounded-full bg-white px-2.5 py-1 text-xs font-medium shadow-lg opacity-0
         transition-opacity duration-150 group-hover:opacity-100"
     >
       {children}

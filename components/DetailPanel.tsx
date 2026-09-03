@@ -6,6 +6,7 @@ import { Drawer } from "vaul";
 import {
   ArrowUpRight,
   Building2,
+  Camera,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -16,7 +17,14 @@ import {
   X
 } from "lucide-react";
 import { cn, formatPrice } from "@/lib/utils";
-import { groupSourcesByType, PROJECT_PHASE_LABELS, type Project, type Promoter, type Source } from "@/lib/schema";
+import {
+  groupSourcesByType,
+  PROJECT_PHASE_LABELS,
+  SOURCE_TYPE_LABELS,
+  type Project,
+  type Promoter,
+  type Source
+} from "@/lib/schema";
 import { PHASE_TAG_COLOR } from "@/lib/status";
 import type { PanelView } from "@/lib/panel-view";
 
@@ -56,44 +64,39 @@ export function DetailPanel({
 }: DetailPanelProps) {
   const isDesktop = useIsDesktop();
   const isPeek = snap === PANEL_SNAP_POINTS[0];
-
-  const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const [tab, setTab] = useState<"apercu" | "prix" | "promoteur" | "photos">("apercu");
+
   useEffect(() => {
-    setHeaderCollapsed(false);
     setTab("apercu");
     scrollRef.current?.scrollTo({ top: 0 });
   }, [view]);
 
   useEffect(() => {
-    if (!isDesktop) setHeaderCollapsed(false);
-  }, [isDesktop]);
-
-  function handleContentScroll() {
-    if (!scrollRef.current) return;
-    setHeaderCollapsed(scrollRef.current.scrollTop > 24);
-  }
-
-  useEffect(() => {
     if (!view) return;
     const resetPointerEvents = () => {
-      if (document.body.style.pointerEvents === "none") document.body.style.pointerEvents = "";
+      if (document.body.style.pointerEvents === "none")
+        document.body.style.pointerEvents = "";
     };
     resetPointerEvents();
     const observer = new MutationObserver(resetPointerEvents);
-    observer.observe(document.body, { attributes: true, attributeFilter: ["style"] });
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["style"]
+    });
     return () => observer.disconnect();
   }, [view]);
 
-  const title = view?.type === "project" ? view.project.name : view?.promoter.name ?? "";
-  const statusPhase = view?.type === "project" ? view.project.status?.phase : undefined;
-  const statusLabel = statusPhase ? PROJECT_PHASE_LABELS[statusPhase] : undefined;
+  const title =
+    view?.type === "project" ? view.project.name : view?.promoter.name ?? "";
+  const statusPhase =
+    view?.type === "project" ? view.project.status?.phase : undefined;
+  const statusLabel = statusPhase
+    ? PROJECT_PHASE_LABELS[statusPhase]
+    : undefined;
   const statusColor = statusPhase ? PHASE_TAG_COLOR[statusPhase] : undefined;
 
-  const [tab, setTab] = useState<"apercu" | "prix" | "promoteur">("apercu");
-
-  const isFull = isDesktop || snap === PANEL_SNAP_POINTS[2];
   const showTabBar = !isPeek && view?.type === "project";
 
   return (
@@ -110,12 +113,12 @@ export function DetailPanel({
       <Drawer.Portal>
         <Drawer.Content
           className={cn(
-            "glass fixed z-20 flex flex-col outline-none",
-            "inset-x-0 bottom-0 h-[92vh] rounded-t-4xl",
-            "md:inset-y-0 md:bottom-0 md:right-0 md:left-auto md:h-full md:w-[480px] md:rounded-none md:border-l md:border-black/5"
+            "fixed z-20 flex flex-col outline-none bg-white",
+            "inset-x-0 bottom-0 h-[92vh] rounded-t-3xl shadow-[0_-2px_20px_rgba(0,0,0,0.08)]",
+            "md:inset-y-0 md:bottom-0 md:right-0 md:left-auto md:h-full md:w-[480px] md:rounded-none md:border-l md:border-neutral-200"
           )}
         >
-          <Drawer.Handle className="mx-auto mt-2 h-1 w-9 shrink-0 rounded-full bg-neutral-400/60 md:hidden" />
+          <Drawer.Handle className="mx-auto mt-2 h-1 w-9 shrink-0 rounded-full bg-neutral-300 md:hidden" />
 
           <div className="flex items-center gap-2 px-4 pb-2 pt-3">
             {canGoBack && (
@@ -123,7 +126,7 @@ export function DetailPanel({
                 type="button"
                 onClick={onBack}
                 aria-label="Retour"
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-neutral-100"
               >
                 <ChevronLeft className="h-4 w-4" aria-hidden />
               </button>
@@ -131,10 +134,10 @@ export function DetailPanel({
             <h1
               className={cn(
                 "min-w-0 flex-1 truncate font-semibold transition-all",
-                isPeek || headerCollapsed ? "text-sm" : "text-lg opacity-0 md:opacity-100"
+                isPeek ? "text-sm" : "text-lg opacity-0 md:opacity-100"
               )}
             >
-              {(isPeek || headerCollapsed) && title}
+              {isPeek && title}
               {isPeek && statusLabel && (
                 <span className={cn("ml-2 text-sm font-normal", statusColor)}>
                   {statusLabel}
@@ -145,14 +148,17 @@ export function DetailPanel({
               type="button"
               onClick={onClose}
               aria-label="Fermer le panneau"
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-neutral-100"
             >
               <X className="h-4 w-4" aria-hidden />
             </button>
           </div>
 
           {!isPeek && view?.type === "project" && (
-            <div ref={scrollRef} onScroll={handleContentScroll} className="flex-1 overflow-y-auto px-6 pb-8">
+            <div
+              ref={scrollRef}
+              className="flex-1 overflow-y-auto scroll-hidden"
+            >
               <ProjectView
                 project={view.project}
                 promoter={view.promoter}
@@ -165,8 +171,14 @@ export function DetailPanel({
           )}
 
           {!isPeek && view?.type === "promoter" && (
-            <div ref={scrollRef} onScroll={handleContentScroll} className="flex-1 overflow-y-auto px-6 pb-8">
-              <PromoterView promoter={view.promoter} onOpenProject={onOpenProject} />
+            <div
+              ref={scrollRef}
+              className="flex-1 overflow-y-auto scroll-hidden"
+            >
+              <PromoterView
+                promoter={view.promoter}
+                onOpenProject={onOpenProject}
+              />
             </div>
           )}
         </Drawer.Content>
@@ -179,7 +191,7 @@ export function DetailPanel({
 // Vue PROJET
 // ---------------------------------------------------------------------------
 
-type ProjectTab = "apercu" | "prix" | "promoteur";
+type ProjectTab = "apercu" | "prix" | "promoteur" | "photos";
 
 function ProjectView({
   project,
@@ -196,114 +208,184 @@ function ProjectView({
   showTabBar: boolean;
   onOpenProject: (id: string) => void;
 }) {
-  const photos = [project.cover_image_url, ...(project.gallery ?? [])].filter(Boolean) as string[];
-  const priceLabel = project.pricing?.summary ? formatPrice(project.pricing.summary) : null;
+  const photos = [
+    project.cover_image_url,
+    ...(project.gallery ?? [])
+  ].filter(Boolean) as string[];
+  const priceLabel = project.pricing?.summary
+    ? formatPrice(project.pricing.summary)
+    : null;
 
   return (
     <div>
-      {photos.length > 0 && (
-        <div className="-mx-6 mb-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-6">
-          {photos.map((src, i) => (
-            <div key={i} className="relative aspect-[4/3] w-[80%] shrink-0 snap-center overflow-hidden rounded-2xl bg-neutral-200 dark:bg-neutral-800">
-              <Image src={src} alt={`${project.name} — photo ${i + 1}`} fill sizes="380px" className="object-cover" />
-            </div>
-          ))}
-        </div>
-      )}
-
-      <h2 className="text-xl font-semibold leading-tight">{project.name}</h2>
-      <p className="mt-1 flex items-center gap-1.5 text-sm text-neutral-500">
-        <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
-        {[project.location.district, project.location.city].filter(Boolean).join(", ")}
-        {project.location.precision !== "exact" && (
-          <span className="text-neutral-400">· localisation approximative</span>
+      {/* Header : titre + statut (visible en dehors du fond lavande) */}
+      <div className="px-6 pt-4 pb-3">
+        <h2 className="text-xl font-semibold leading-tight">
+          {project.name}
+        </h2>
+        <p className="mt-1 flex items-center gap-1.5 text-sm text-neutral-500">
+          <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          {[project.location.district, project.location.city]
+            .filter(Boolean)
+            .join(", ")}
+          {project.location.precision !== "exact" && (
+            <span className="text-neutral-400">
+              · localisation approximative
+            </span>
+          )}
+        </p>
+        {project.status && (
+          <span
+            className={cn(
+              "mt-2 text-sm font-medium",
+              PHASE_TAG_COLOR[project.status.phase]
+            )}
+          >
+            {PROJECT_PHASE_LABELS[project.status.phase]}
+          </span>
         )}
-      </p>
-      {project.status && (
-        <span className={cn("mt-2 text-sm font-medium", PHASE_TAG_COLOR[project.status.phase])}>
-          {PROJECT_PHASE_LABELS[project.status.phase]}
-        </span>
-      )}
+      </div>
 
-      {showTabBar && (
-        <div className="sticky -top-px z-10 -mx-6 mt-4 flex gap-5 border-b border-black/10 bg-white/95 px-6 backdrop-blur dark:border-white/10 dark:bg-neutral-900/95">
-          {(["apercu", "prix", "promoteur"] as const).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setTab(t)}
-              className={cn(
-                "-mb-px border-b-2 py-2.5 text-sm font-medium transition-colors",
-                tab === t
-                  ? "border-primary text-neutral-900 dark:text-white"
-                  : "border-transparent text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200"
-              )}
-            >
-              {TAB_LABELS[t]}
-            </button>
-          ))}
+      {/* Carrousel photos : grid 2 colonnes */}
+      {photos.length > 0 && (
+        <div className="px-6 pb-4">
+          <div className="grid grid-cols-2 gap-3">
+            {photos.slice(0, 4).map((src, i) => (
+              <div
+                key={i}
+                className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-neutral-200"
+              >
+                <Image
+                  src={src}
+                  alt={`${project.name} — photo ${i + 1}`}
+                  fill
+                  sizes="220px"
+                  className="object-cover"
+                />
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
-      {tab === "apercu" && (
-        <>
-          {project.characteristics && project.characteristics.length > 0 && (
-            <Section title="Caractéristiques" icon={<Target className="h-4 w-4" />}>
-              <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5">
-                {project.characteristics.map((c) => (
-                  <div key={c.label}>
-                    <dt className="text-xs text-neutral-500">{c.label}</dt>
-                    <dd className="text-sm font-medium">{c.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            </Section>
-          )}
-
-          {project.timeline && project.timeline.length > 0 && (
-            <Section title="Historique" icon={<Info className="h-4 w-4" />}>
-              <ol className="space-y-3">
-                {project.timeline.map((entry, i) => (
-                  <li key={i} className="flex gap-3">
-                    <span className="w-16 shrink-0 text-xs text-neutral-500">{entry.date}</span>
-                    <span className="text-sm">{entry.label}</span>
-                  </li>
-                ))}
-              </ol>
-            </Section>
-          )}
-
-          {project.public_information && project.public_information.length > 0 && (
-            <Section title="À savoir" icon={<Info className="h-4 w-4" />}>
-              <PublicInfoList items={project.public_information} />
-            </Section>
-          )}
-
-          <SourcesSection sources={project.sources} />
-        </>
+      {/* Onglets : TOUJOURS visibles quand pas peek */}
+      {showTabBar && (
+        <div className="sticky top-0 z-10 border-b border-neutral-200 bg-white">
+          <div className="flex gap-5 px-6">
+            {(["apercu", "prix", "promoteur", "photos"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTab(t)}
+                className={cn(
+                  "-mb-px border-b-2 py-2.5 text-sm font-medium transition-colors",
+                  tab === t
+                    ? "border-primary text-primary"
+                    : "border-transparent text-neutral-500 hover:text-neutral-800"
+                )}
+              >
+                {TAB_LABELS[t]}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
 
-      {tab === "prix" && (
-        <>
-          {(priceLabel || project.pricing?.by_unit?.length) && (
-            <Section title="Prix" icon={<Target className="h-4 w-4" />}>
-              {priceLabel && (
-                <p className="text-2xl font-semibold">{priceLabel}</p>
+      {/* Contenu sur fond lavande */}
+      <div className="bg-[#f0f4ff]">
+        {tab === "apercu" && (
+          <div className="p-4">
+            {project.characteristics &&
+              project.characteristics.length > 0 && (
+                <Section
+                  title="Caractéristiques"
+                  icon={<Target className="h-4 w-4" />}
+                >
+                  <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5">
+                    {project.characteristics.map((c) => (
+                      <div key={c.label}>
+                        <dt className="text-xs text-neutral-500">
+                          {c.label}
+                        </dt>
+                        <dd className="text-sm font-medium">{c.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </Section>
               )}
-              {project.pricing?.by_unit && project.pricing.by_unit.length > 0 && (
-                <div className="mt-4">
-                  <p className="mb-2 text-xs font-medium text-neutral-500">Unités</p>
-                  <UnitsList units={project.pricing.by_unit} />
-                </div>
-              )}
-            </Section>
-          )}
-        </>
-      )}
 
-      {tab === "promoteur" && (
-        <PromoterInline promoter={promoter} onOpenProject={onOpenProject} />
-      )}
+            {project.timeline && project.timeline.length > 0 && (
+              <Section
+                title="Historique"
+                icon={<Info className="h-4 w-4" />}
+              >
+                <ol className="space-y-3">
+                  {project.timeline.map((entry, i) => (
+                    <li key={i} className="flex gap-3">
+                      <span className="w-16 shrink-0 text-xs text-neutral-500">
+                        {entry.date}
+                      </span>
+                      <span className="text-sm">{entry.label}</span>
+                    </li>
+                  ))}
+                </ol>
+              </Section>
+            )}
+
+            {project.public_information &&
+              project.public_information.length > 0 && (
+                <Section
+                  title="À savoir"
+                  icon={<Info className="h-4 w-4" />}
+                >
+                  <PublicInfoList items={project.public_information} />
+                </Section>
+              )}
+
+            <SourcesSection sources={project.sources} />
+          </div>
+        )}
+
+        {tab === "prix" && (
+          <div className="p-4">
+            {(priceLabel ||
+              project.pricing?.by_unit?.length) && (
+              <Section title="Prix" icon={<Target className="h-4 w-4" />}>
+                {priceLabel && (
+                  <p className="text-2xl font-semibold">{priceLabel}</p>
+                )}
+                {project.pricing?.by_unit &&
+                  project.pricing.by_unit.length > 0 && (
+                    <div className="mt-4">
+                      <p className="mb-2 text-xs font-medium text-neutral-500">
+                        Unités
+                      </p>
+                      <UnitsList units={project.pricing.by_unit} />
+                    </div>
+                  )}
+              </Section>
+            )}
+          </div>
+        )}
+
+        {tab === "promoteur" && (
+          <div className="p-4">
+            <PromoterInline
+              promoter={promoter}
+              onOpenProject={onOpenProject}
+            />
+          </div>
+        )}
+
+        {tab === "photos" && (
+          <div className="p-4">
+            <PhotosGallery
+              project={project}
+              promoter={promoter}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -311,8 +393,66 @@ function ProjectView({
 const TAB_LABELS: Record<ProjectTab, string> = {
   apercu: "Aperçu",
   prix: "Prix",
-  promoteur: "Promoteur"
+  promoteur: "Promoteur",
+  photos: "Photos"
 };
+
+// ---------------------------------------------------------------------------
+// Galerie Photos — toutes les photos du projet + promoteur
+// ---------------------------------------------------------------------------
+
+function PhotosGallery({
+  project,
+  promoter
+}: {
+  project: Project;
+  promoter: Promoter;
+}) {
+  const allPhotos: { src: string; alt: string }[] = [];
+
+  if (project.cover_image_url) {
+    allPhotos.push({
+      src: project.cover_image_url,
+      alt: `${project.name} — cover`
+    });
+  }
+  for (const url of project.gallery ?? []) {
+    allPhotos.push({ src: url, alt: `${project.name} — galerie` });
+  }
+  if (promoter.photo_url) {
+    allPhotos.push({
+      src: promoter.photo_url,
+      alt: `${promoter.name} — photo promoteur`
+    });
+  }
+
+  if (allPhotos.length === 0) {
+    return (
+      <p className="text-sm text-neutral-500">Aucune photo disponible.</p>
+    );
+  }
+
+  return (
+    <Section title="Toutes les photos" icon={<Camera className="h-4 w-4" />}>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+        {allPhotos.map((photo, i) => (
+          <div
+            key={i}
+            className="relative aspect-square overflow-hidden rounded-2xl bg-neutral-200"
+          >
+            <Image
+              src={photo.src}
+              alt={photo.alt}
+              fill
+              sizes="200px"
+              className="object-cover"
+            />
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Vue Promoteur INLINE (dans l'onglet du projet)
@@ -327,80 +467,130 @@ function PromoterInline({
 }) {
   return (
     <div>
-      <div className="flex items-center gap-3 pt-1">
-        {promoter.photo_url ? (
-          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
-            <Image src={promoter.photo_url} alt={promoter.name} fill sizes="56px" className="object-cover" />
-          </div>
-        ) : (
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-black/5 dark:bg-white/10">
-            <Building2 className="h-6 w-6 text-neutral-500" aria-hidden />
-          </div>
+      {/* Nom + badges */}
+      <h2 className="text-2xl font-bold leading-tight">{promoter.name}</h2>
+      {promoter.legal_name && promoter.legal_name !== promoter.name && (
+        <p className="mt-0.5 text-sm text-neutral-500">
+          {promoter.legal_name}
+        </p>
+      )}
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        {promoter.company?.founded_year && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+            <Building2 className="h-3 w-3" />
+            Depuis {promoter.company.founded_year}
+          </span>
         )}
-        <div className="min-w-0">
-          <h2 className="truncate text-xl font-semibold leading-tight">{promoter.name}</h2>
-          {promoter.legal_name && promoter.legal_name !== promoter.name && (
-            <p className="truncate text-sm text-neutral-500">{promoter.legal_name}</p>
-          )}
-        </div>
+        {promoter.company?.activity && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+            {promoter.company.activity}
+          </span>
+        )}
+        {promoter.projects.length > 0 && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+            <MapPin className="h-3 w-3" />
+            + de {promoter.projects.length} propriétés
+          </span>
+        )}
       </div>
 
-      {promoter.company && (
-        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-neutral-500">
-          {promoter.company.activity && <span>{promoter.company.activity}</span>}
-          {promoter.company.founded_year && <span>Depuis {promoter.company.founded_year}</span>}
-          {promoter.company.website && (
-            <a
-              href={promoter.company.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 text-teal-700 hover:underline dark:text-teal-400"
-            >
-              <Globe className="h-3.5 w-3.5" aria-hidden />
-              Site officiel
-            </a>
+      {/* Layout photo + "A propos" côte à côte */}
+      <div className="mt-4 grid grid-cols-[120px_1fr] gap-4">
+        {promoter.photo_url && (
+          <div className="relative aspect-square overflow-hidden rounded-2xl bg-neutral-200">
+            <Image
+              src={promoter.photo_url}
+              alt={promoter.name}
+              fill
+              sizes="120px"
+              className="object-cover"
+            />
+          </div>
+        )}
+        {promoter.public_information &&
+          promoter.public_information.length > 0 && (
+            <div className="rounded-xl bg-white p-3">
+              <p className="mb-1 text-sm font-semibold text-teal-700">
+                A propos du promoteur
+              </p>
+              <div className="space-y-2 text-sm text-neutral-600">
+                {promoter.public_information.map((item, i) => (
+                  <p key={i}>{item.description}</p>
+                ))}
+              </div>
+            </div>
           )}
-        </div>
+      </div>
+
+      {/* Site officiel */}
+      {promoter.company?.website && (
+        <a
+          href={promoter.company.website}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-teal-700 hover:underline"
+        >
+          <Globe className="h-3.5 w-3.5" aria-hidden />
+          Site officiel
+        </a>
       )}
 
-      {promoter.public_information && promoter.public_information.length > 0 && (
-        <Section title="À savoir" icon={<Info className="h-4 w-4" />}>
-          <PublicInfoList items={promoter.public_information} />
-        </Section>
-      )}
-
-      <Section title={promoter.projects.length > 1 ? "Ses projets" : "Son projet"} icon={<MapPin className="h-4 w-4" />}>
-        <ul className="divide-y divide-black/5 dark:divide-white/5">
+      {/* Ses projets */}
+      <Section
+        title={promoter.projects.length > 1 ? "Ses projets" : "Son projet"}
+        icon={<MapPin className="h-4 w-4" />}
+      >
+        <ul className="divide-y divide-neutral-200">
           {promoter.projects.map((project) => (
             <li key={project.id}>
               <button
                 type="button"
                 onClick={() => onOpenProject(project.id)}
-                className="flex w-full items-center gap-3 py-2.5 text-left hover:bg-black/5 dark:hover:bg-white/10"
+                className="flex w-full items-center gap-3 py-2.5 text-left hover:bg-white/60"
               >
                 {project.cover_image_url ? (
-                  <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-neutral-200 dark:bg-neutral-800">
-                    <Image src={project.cover_image_url} alt={project.name} fill sizes="44px" className="object-cover" />
+                  <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full bg-neutral-200">
+                    <Image
+                      src={project.cover_image_url}
+                      alt={project.name}
+                      fill
+                      sizes="44px"
+                      className="object-cover"
+                    />
                   </div>
                 ) : (
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-black/5 dark:bg-white/10">
-                    <MapPin className="h-4 w-4 text-neutral-500" aria-hidden />
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-neutral-100">
+                    <MapPin
+                      className="h-4 w-4 text-neutral-400"
+                      aria-hidden
+                    />
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{project.name}</p>
+                  <p className="truncate text-sm font-medium text-primary">
+                    {project.name}
+                  </p>
                   <p className="truncate text-xs text-neutral-500">
-                    {[project.location.district, project.location.city].filter(Boolean).join(", ")}
+                    {[
+                      project.location.district,
+                      project.location.city
+                    ]
+                      .filter(Boolean)
+                      .join(", ")}
                   </p>
                 </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400" aria-hidden />
+                <ChevronRight
+                  className="h-4 w-4 shrink-0 text-neutral-400"
+                  aria-hidden
+                />
               </button>
             </li>
           ))}
         </ul>
       </Section>
 
-      <SourcesSection sources={promoter.sources} />
+      <SourcesSection sources={promoter.sources ?? []} />
     </div>
   );
 }
@@ -416,18 +606,30 @@ function PromoterView({
   promoter: Promoter;
   onOpenProject: (projectId: string) => void;
 }) {
-  return <PromoterInline promoter={promoter} onOpenProject={onOpenProject} />;
+  return (
+    <div className="p-4">
+      <PromoterInline promoter={promoter} onOpenProject={onOpenProject} />
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
 // Composants partagés
 // ---------------------------------------------------------------------------
 
-function Section({ title, icon, children }: { title?: string; icon?: React.ReactNode; children: React.ReactNode }) {
+function Section({
+  title,
+  icon,
+  children
+}: {
+  title?: string;
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="mt-5 border-t border-black/5 pt-5 first:mt-4 first:border-none first:pt-0 dark:border-white/5">
+    <div className="mt-5 border-t border-neutral-200 pt-5 first:mt-0 first:border-none first:pt-0">
       {title && (
-        <h3 className="mb-2.5 flex items-center gap-1.5 text-sm font-semibold text-teal-700 dark:text-teal-500">
+        <h3 className="mb-2.5 flex items-center gap-1.5 text-sm font-semibold text-teal-700">
           {icon}
           {title}
         </h3>
@@ -437,11 +639,18 @@ function Section({ title, icon, children }: { title?: string; icon?: React.React
   );
 }
 
-function UnitsList({ units: unitList }: { units: NonNullable<Project["pricing"]>["by_unit"] }) {
+function UnitsList({
+  units: unitList
+}: {
+  units: NonNullable<Project["pricing"]>["by_unit"];
+}) {
   return (
-    <ul className="divide-y divide-black/5 dark:divide-white/5">
+    <ul className="divide-y divide-neutral-200">
       {(unitList ?? []).map((unit, i) => (
-        <li key={i} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+        <li
+          key={i}
+          className="flex items-center justify-between gap-3 py-2.5 text-sm"
+        >
           <div>
             <p className="font-medium">{unit.typology}</p>
             <p className="text-xs text-neutral-500">
@@ -454,22 +663,36 @@ function UnitsList({ units: unitList }: { units: NonNullable<Project["pricing"]>
                 .join(" · ")}
             </p>
           </div>
-          {unit.price && <p className="shrink-0 text-sm font-medium">{formatPrice(unit.price)}</p>}
+          {unit.price && (
+            <p className="shrink-0 text-sm font-medium">
+              {formatPrice(unit.price)}
+            </p>
+          )}
         </li>
       ))}
     </ul>
   );
 }
 
-function PublicInfoList({ items }: { items: { title: string; description: string }[] }) {
+function PublicInfoList({
+  items
+}: {
+  items: { title: string; description: string }[];
+}) {
   return (
     <ul className="space-y-3">
       {items.map((item, i) => (
-        <li key={i} className="flex gap-2.5 rounded-2xl bg-black/5 px-3 py-2.5 dark:bg-white/5">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-neutral-500" aria-hidden />
+        <li
+          key={i}
+          className="flex gap-2.5 rounded-xl bg-white px-3 py-2.5"
+        >
+          <Info
+            className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400"
+            aria-hidden
+          />
           <div>
             <p className="text-sm font-medium">{item.title}</p>
-            <p className="mt-0.5 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+            <p className="mt-0.5 text-sm leading-relaxed text-neutral-600">
               {item.description}
             </p>
           </div>
@@ -482,7 +705,6 @@ function PublicInfoList({ items }: { items: { title: string; description: string
 function SourcesSection({ sources }: { sources: Source[] }) {
   const [open, setOpen] = useState(false);
   if (sources.length === 0) return null;
-  const groups = groupSourcesByType(sources);
 
   return (
     <Section>
@@ -492,31 +714,46 @@ function SourcesSection({ sources }: { sources: Source[] }) {
         className="flex w-full items-center justify-between py-1 text-left"
         aria-expanded={open}
       >
-        <span className="text-sm font-semibold">Sources — {sources.length}</span>
-        <ChevronDown className={cn("h-4 w-4 text-neutral-500 transition-transform", open && "rotate-180")} aria-hidden />
+        <span className="text-sm font-semibold text-neutral-700">
+          Sources — {sources.length}
+        </span>
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 text-neutral-500 transition-transform",
+            open && "rotate-180"
+          )}
+          aria-hidden
+        />
       </button>
 
       {open && (
-        <div className="mt-2 space-y-4">
-          {groups.map((group) => (
-            <div key={group.type}>
-              <p className="mb-1.5 text-xs font-medium text-neutral-500">{group.label}</p>
-              <ul className="space-y-1">
-                {group.items.map((source) => (
-                  <li key={source.id}>
-                    <a
-                      href={source.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 rounded-xl px-2 py-1.5 text-sm hover:bg-black/5 dark:hover:bg-white/10"
-                    >
-                      <span className="flex-1 truncate">{source.title}</span>
-                      <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-neutral-400" aria-hidden />
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
+        <div className="mt-3 space-y-2">
+          {sources.map((source) => (
+            <a
+              key={source.id}
+              href={source.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-start gap-3 rounded-xl bg-white p-3 shadow-sm transition-colors hover:bg-neutral-50"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-neutral-400">
+                  {SOURCE_TYPE_LABELS[source.type] ?? source.type}
+                </p>
+                <p className="truncate text-sm font-medium text-neutral-800">
+                  {source.title}
+                </p>
+                {source.published_at && (
+                  <p className="mt-0.5 text-xs text-neutral-400">
+                    Publié le {source.published_at}
+                  </p>
+                )}
+              </div>
+              <ArrowUpRight
+                className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400"
+                aria-hidden
+              />
+            </a>
           ))}
         </div>
       )}
