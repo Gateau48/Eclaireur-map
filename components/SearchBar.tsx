@@ -9,11 +9,12 @@ interface SearchBarProps {
   editionId: string;
   onSelect: (result: SearchApiResult) => void;
   hidden?: boolean;
+  panelOpen?: boolean;
 }
 
 const DEBOUNCE_MS = 200;
 
-export function SearchBar({ editionId, onSelect, hidden }: SearchBarProps) {
+export function SearchBar({ editionId, onSelect, hidden, panelOpen }: SearchBarProps) {
   const [rawQuery, setRawQuery] = useState("");
   const [results, setResults] = useState<SearchApiResult[]>([]);
   const [isFocused, setIsFocused] = useState(false);
@@ -63,10 +64,16 @@ export function SearchBar({ editionId, onSelect, hidden }: SearchBarProps) {
     <>
       <div
         className={cn(
-          "absolute left-1/2 top-4 z-30 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 overflow-hidden bg-white shadow-lg",
-          "transition-[border-radius,box-shadow] duration-150",
+          "absolute top-4 z-30 overflow-hidden bg-white shadow-lg",
+          "transition-[border-radius,box-shadow,left,right,transform] duration-150",
           hasDropdown ? "rounded-3xl" : "rounded-full",
           "focus-within:shadow-xl",
+          // Mobile: centered
+          "left-1/2 w-[calc(100%-2rem)] max-w-md -translate-x-1/2",
+          // Desktop: centered normally, shifted left when panel is open
+          panelOpen
+            ? "md:left-auto md:right-[520px] md:translate-x-0 md:w-[calc(100%-540px)] md:max-w-lg"
+            : "md:left-1/2 md:-translate-x-1/2",
           hidden &&
             "pointer-events-none opacity-0 md:pointer-events-auto md:opacity-100",
           isFocused && "hidden md:block"

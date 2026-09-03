@@ -21,7 +21,6 @@ import {
   PROJECT_PHASE_LABELS,
   SOURCE_TYPE_LABELS,
   type Project,
-  type ProjectPhase,
   type Promoter,
   type Source
 } from "@/lib/schema";
@@ -64,7 +63,6 @@ export function DetailPanel({
 }: DetailPanelProps) {
   const isDesktop = useIsDesktop();
   const isPeek = snap === PANEL_SNAP_POINTS[0];
-  const isFull = isDesktop || snap === PANEL_SNAP_POINTS[2];
   const scrollRef = useRef<HTMLDivElement>(null);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [tab, setTab] = useState<"apercu" | "prix" | "promoteur" | "photos">("apercu");
@@ -102,7 +100,6 @@ export function DetailPanel({
   const statusLabel = statusPhase ? PROJECT_PHASE_LABELS[statusPhase] : undefined;
   const statusColor = statusPhase ? PHASE_TAG_COLOR[statusPhase] : undefined;
 
-  const showTabBar = isFull && view?.type === "project";
   const titleTruncated = headerCollapsed || isPeek;
 
   return (
@@ -120,9 +117,10 @@ export function DetailPanel({
         <Drawer.Content
           className={cn(
             "fixed z-20 flex flex-col outline-none bg-white",
-            "inset-x-0 bottom-0 h-[92vh] rounded-t-3xl shadow-[0_-2px_20px_rgba(0,0,0,0.08)]",
+            "inset-x-0 bottom-0 rounded-t-3xl shadow-[0_-2px_20px_rgba(0,0,0,0.08)]",
             "md:inset-y-0 md:bottom-0 md:right-0 md:left-auto md:h-full md:w-[480px] md:rounded-none md:border-l md:border-neutral-200"
           )}
+          style={{ height: "min(92dvh, 92vh)" }}
         >
           <Drawer.Handle className="mx-auto mt-2 h-1 w-9 shrink-0 rounded-full bg-neutral-300 md:hidden" />
 
@@ -162,29 +160,6 @@ export function DetailPanel({
               <X className="h-4 w-4" aria-hidden />
             </button>
           </div>
-
-          {/* Onglets sticky — toujours rendus quand pas peek, avec projet */}
-          {showTabBar && (
-            <div className="sticky top-0 z-10 border-b border-neutral-200 bg-white">
-              <div className="flex gap-5 px-6">
-                {(["apercu", "prix", "promoteur", "photos"] as const).map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setTab(t)}
-                    className={cn(
-                      "-mb-px border-b-2 py-2.5 text-sm font-medium transition-colors",
-                      tab === t
-                        ? "border-primary text-primary"
-                        : "border-transparent text-neutral-500 hover:text-neutral-800"
-                    )}
-                  >
-                    {TAB_LABELS[t]}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Contenu scrollable */}
           {!isPeek && view?.type === "project" && (
@@ -439,11 +414,11 @@ function ProjectView({
         </div>
 
         {tab === "apercu" && (
-          <ApercuTab project={project} phase={project.status?.phase} />
+          <ApercuTab project={project} />
         )}
 
         {tab === "prix" && (
-          <PrixTab project={project} phase={project.status?.phase} />
+          <PrixTab project={project} />
         )}
 
         {tab === "promoteur" && (
@@ -477,19 +452,17 @@ const TAB_LABELS: Record<ProjectTab, string> = {
 // Onglet Aperçu
 // ---------------------------------------------------------------------------
 
-function ApercuTab({ project, phase }: { project: Project; phase?: ProjectPhase }) {
-  const sectionColor = phase ? PHASE_SECTION_COLOR[phase] : undefined;
-
+function ApercuTab({ project }: { project: Project }) {
   return (
     <div className="space-y-5 pt-1">
       {project.description && (
-        <Section title={`A propos de ${project.name.split(" ")[0]}...`} icon={<Info className="h-4 w-4" />} colorClass={sectionColor}>
+        <Section title={`A propos de ${project.name.split(" ")[0]}...`} icon={<Info className="h-4 w-4" />}>
           <p className="text-sm leading-relaxed text-neutral-700">{project.description}</p>
         </Section>
       )}
 
       {project.characteristics && project.characteristics.length > 0 && (
-        <Section title="Caractéristiques" icon={<Target className="h-4 w-4" />} colorClass={sectionColor}>
+        <Section title="Caractéristiques" icon={<Target className="h-4 w-4" />}>
           <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5">
             {project.characteristics.map((c) => (
               <div key={c.label}>
@@ -502,7 +475,7 @@ function ApercuTab({ project, phase }: { project: Project; phase?: ProjectPhase 
       )}
 
       {project.timeline && project.timeline.length > 0 && (
-        <Section title="Historique" icon={<Info className="h-4 w-4" />} colorClass={sectionColor}>
+        <Section title="Historique" icon={<Info className="h-4 w-4" />}>
           <ol className="space-y-3">
             {project.timeline.map((entry, i) => (
               <li key={i} className="flex gap-3">
@@ -515,7 +488,7 @@ function ApercuTab({ project, phase }: { project: Project; phase?: ProjectPhase 
       )}
 
       {project.public_information && project.public_information.length > 0 && (
-        <Section title="À savoir" icon={<Info className="h-4 w-4" />} colorClass={sectionColor}>
+        <Section title="À savoir" icon={<Info className="h-4 w-4" />}>
           <PublicInfoList items={project.public_information} />
         </Section>
       )}
@@ -529,20 +502,19 @@ function ApercuTab({ project, phase }: { project: Project; phase?: ProjectPhase 
 // Onglet Prix
 // ---------------------------------------------------------------------------
 
-function PrixTab({ project, phase }: { project: Project; phase?: ProjectPhase }) {
-  const sectionColor = phase ? PHASE_SECTION_COLOR[phase] : undefined;
+function PrixTab({ project }: { project: Project }) {
   const priceLabel = project.pricing?.summary ? formatPrice(project.pricing.summary) : null;
 
   return (
     <div className="space-y-5 pt-1">
       {priceLabel && (
-        <Section title="À propos du prix" icon={<Info className="h-4 w-4" />} colorClass={sectionColor}>
+        <Section title="À propos du prix" icon={<Info className="h-4 w-4" />}>
           <p className="text-2xl font-semibold">{priceLabel}</p>
         </Section>
       )}
 
       {project.pricing?.by_unit && project.pricing.by_unit.length > 0 && (
-        <Section title="Units" icon={<Target className="h-4 w-4" />} colorClass={sectionColor}>
+        <Section title="Units" icon={<Target className="h-4 w-4" />}>
           <UnitsList units={project.pricing.by_unit} />
         </Section>
       )}
@@ -739,20 +711,11 @@ function PromoterView({
 // Composants partagés
 // ---------------------------------------------------------------------------
 
-const PHASE_SECTION_COLOR: Record<ProjectPhase, string> = {
-  annonce: "text-sky-600",
-  commercialisation: "text-emerald-600",
-  en_construction: "text-amber-600",
-  livre: "text-neutral-600",
-  suspendu: "text-red-600",
-  inconnu: "text-teal-700"
-};
-
-function Section({ title, icon, colorClass, children }: { title?: string; icon?: React.ReactNode; colorClass?: string; children: React.ReactNode }) {
+function Section({ title, icon, children }: { title?: string; icon?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="border-t border-neutral-200 pt-4 first:border-none first:pt-0">
       {title && (
-        <h3 className={cn("mb-2.5 flex items-center gap-1.5 text-sm font-semibold", colorClass ?? "text-teal-700")}>
+        <h3 className="mb-2.5 flex items-center gap-1.5 text-sm font-semibold text-teal-700">
           {icon}
           {title}
         </h3>
@@ -810,8 +773,11 @@ function SourcesSection({ sources }: { sources: Source[] }) {
         className="flex w-full items-center justify-between py-1 text-left"
         aria-expanded={open}
       >
-        <span className="text-sm font-semibold text-neutral-700">Sources — {sources.length}</span>
-        <ChevronDown className={cn("h-4 w-4 text-neutral-500 transition-transform", open && "rotate-180")} aria-hidden />
+        <div>
+          <span className="text-sm font-semibold text-neutral-700">Sources publiques</span>
+          <p className="text-xs text-neutral-500">Ces informations proviennent de sources vérifiées — cliquez pour les consulter.</p>
+        </div>
+        <ChevronDown className={cn("h-4 w-4 shrink-0 text-neutral-500 transition-transform", open && "rotate-180")} aria-hidden />
       </button>
 
       {open && (

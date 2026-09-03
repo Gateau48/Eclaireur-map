@@ -95,6 +95,7 @@ export function CarteClient({ edition }: { edition: EditionData }) {
         editionId={edition.edition_id}
         onSelect={handleSelectSearchResult}
         hidden={snap === PANEL_SNAP_POINTS[2]}
+        panelOpen={!!view}
       />
 
       <MapLegend className="absolute bottom-28 left-4 z-10 md:bottom-6" />
