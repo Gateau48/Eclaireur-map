@@ -3,63 +3,56 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowUpRight, MapPin, Search, User } from "lucide-react";
 import { cn, normalize } from "@/lib/utils";
-import type { Point, Promoter, ZoneData } from "@/lib/schema";
+import type { EditionData, Project, Promoter } from "@/lib/schema";
 
 export type SearchResult =
-  | { kind: "projet"; point: Point; promoter: Promoter; zoneName: string }
-  | { kind: "promoteur"; promoter: Promoter; primaryPoint: Point; zoneName: string };
+  | { kind: "projet"; project: Project; promoter: Promoter }
+  | { kind: "promoteur"; promoter: Promoter };
 
 interface SearchBarProps {
-  zones: ZoneData[];
+  edition: EditionData;
   onSelect: (result: SearchResult) => void;
 }
 
 const DEBOUNCE_MS = 180;
 
-function buildIndex(zones: ZoneData[]): SearchResult[] {
+function buildIndex(edition: EditionData): SearchResult[] {
   const results: SearchResult[] = [];
-  for (const zone of zones) {
-    for (const promoter of zone.promoters) {
-      const primaryPoint = zone.points.find((p) => p.promoter_id === promoter.id);
-      if (primaryPoint) {
-        results.push({ kind: "promoteur", promoter, primaryPoint, zoneName: zone.zone_name });
-      }
-    }
-    for (const point of zone.points) {
-      const promoter = zone.promoters.find((p) => p.id === point.promoter_id);
-      if (promoter) {
-        results.push({ kind: "projet", point, promoter, zoneName: zone.zone_name });
-      }
+  for (const promoter of edition.promoters) {
+    results.push({ kind: "promoteur", promoter });
+    for (const project of promoter.projects) {
+      results.push({ kind: "projet", project, promoter });
     }
   }
   return results;
 }
 
-export function SearchBar({ zones, onSelect }: SearchBarProps) {
+export function SearchBar({ edition, onSelect }: SearchBarProps) {
   const [rawQuery, setRawQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Debounce obligatoire (150-200ms).
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(rawQuery), DEBOUNCE_MS);
     return () => clearTimeout(t);
   }, [rawQuery]);
 
-  const index = useMemo(() => buildIndex(zones), [zones]);
+  const index = useMemo(() => buildIndex(edition), [edition]);
 
   const results = useMemo(() => {
     const q = normalize(debouncedQuery);
     if (!q) return [];
     return index
       .filter((r) => {
-        const name = r.kind === "projet" ? r.point.name : r.promoter.name;
-        return (
-          normalize(name).includes(q) ||
-          normalize(r.zoneName).includes(q) ||
-          normalize(r.promoter.name).includes(q)
-        );
+        if (r.kind === "projet") {
+          return (
+            normalize(r.project.name).includes(q) ||
+            normalize(r.project.location.city).includes(q) ||
+            normalize(r.promoter.name).includes(q)
+          );
+        }
+        return normalize(r.promoter.name).includes(q);
       })
       .slice(0, 20);
   }, [debouncedQuery, index]);
@@ -81,8 +74,6 @@ export function SearchBar({ zones, onSelect }: SearchBarProps) {
 
   return (
     <>
-      {/* Champ flottant desktop/tablette — remplacé par l'overlay plein
-          écran ci-dessous sur mobile au focus. */}
       <div
         className={cn(
           "glass absolute left-1/2 top-4 z-10 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-full",
@@ -112,7 +103,6 @@ export function SearchBar({ zones, onSelect }: SearchBarProps) {
         )}
       </div>
 
-      {/* Overlay plein écran, mobile uniquement — comme Google Maps. */}
       {isFocused && (
         <div className="fixed inset-0 z-40 flex flex-col bg-white dark:bg-neutral-950 md:hidden">
           <div className="flex items-center gap-3 border-b border-black/10 px-4 py-3 dark:border-white/10">
@@ -150,7 +140,7 @@ export function SearchBar({ zones, onSelect }: SearchBarProps) {
 }
 
 function resultKey(r: SearchResult) {
-  return r.kind === "projet" ? `projet-${r.point.id}` : `promoteur-${r.promoter.id}`;
+  return r.kind === "projet" ? `projet-${r.project.id}` : `promoteur-${r.promoter.id}`;
 }
 
 function ResultRow({
@@ -160,9 +150,11 @@ function ResultRow({
   result: SearchResult;
   onSelect: (r: SearchResult) => void;
 }) {
-  const title = result.kind === "projet" ? result.point.name : result.promoter.name;
+  const title = result.kind === "projet" ? result.project.name : result.promoter.name;
   const subtitle =
-    result.kind === "projet" ? `Promoteur ${result.promoter.name}` : `Promoteur · ${result.zoneName}`;
+    result.kind === "projet"
+      ? `${result.promoter.name} · ${result.project.location.city}`
+      : `${result.promoter.projects.length} projet(s)`;
 
   return (
     <li>

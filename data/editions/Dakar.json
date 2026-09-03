@@ -1,0 +1,179 @@
+{
+  "edition_id": "dakar",
+  "edition_name": "Dakar",
+  "promoters": [
+    {
+      "id": "promoter-teranga-immo",
+      "name": "Teranga Immo",
+      "legal_name": "Teranga Immobilier SARL",
+      "photo_url": "https://api.dicebear.com/9.x/initials/png?seed=Teranga%20Immo&backgroundType=gradientLinear",
+      "company": {
+        "activity": "Promotion immobilière résidentielle",
+        "founded_year": 2015,
+        "website": "https://example.com/teranga-immo"
+      },
+      "public_information": [
+        {
+          "title": "Retard signalé sur un programme précédent",
+          "description": "Un article de presse de 2024 rapporte un retard de livraison de plusieurs mois sur un programme antérieur du promoteur à Yoff, sans procédure judiciaire associée.",
+          "source_id": "src-teranga-presse-1"
+        }
+      ],
+      "sources": [
+        {
+          "id": "src-teranga-site",
+          "type": "site_officiel_promoteur",
+          "title": "Site officiel de Teranga Immo",
+          "url": "https://example.com/teranga-immo",
+          "accessed_at": "2026-08-20"
+        },
+        {
+          "id": "src-teranga-presse-1",
+          "type": "article_presse",
+          "title": "Retard de livraison signalé à Yoff",
+          "url": "https://example.com/presse/teranga-retard-yoff",
+          "published_at": "2024-11-03",
+          "accessed_at": "2026-08-20"
+        }
+      ],
+      "projects": [
+        {
+          "id": "project-teranga-bay",
+          "name": "Résidence Teranga Bay",
+          "cover_image_url": "https://picsum.photos/seed/project-teranga-bay/800/600",
+          "location": {
+            "address": "Route des Almadies, non loin du phare",
+            "district": "Almadies",
+            "city": "Dakar",
+            "latitude": 14.7461,
+            "longitude": -17.5142,
+            "precision": "exact"
+          },
+          "status": {
+            "phase": "en_construction",
+            "detail": "Gros œuvre achevé sur les 3 bâtiments, finitions en cours",
+            "source_id": "src-project-annonce"
+          },
+          "pricing": {
+            "summary": {
+              "type": "starting_from",
+              "value": 35000000,
+              "currency": "XOF",
+              "source_id": "src-project-annonce",
+              "published_at": "2026-06-01",
+              "accessed_at": "2026-08-30"
+            },
+            "by_unit": [
+              {
+                "typology": "Appartement 2 pièces",
+                "surface_sqm": 55,
+                "bedrooms": 1,
+                "bathrooms": 1,
+                "price": {
+                  "type": "fixed",
+                  "value": 35000000,
+                  "currency": "XOF",
+                  "source_id": "src-project-annonce",
+                  "accessed_at": "2026-08-30"
+                }
+              },
+              {
+                "typology": "Appartement 3 pièces",
+                "surface_sqm": 78,
+                "bedrooms": 2,
+                "bathrooms": 2,
+                "price": {
+                  "type": "fixed",
+                  "value": 52000000,
+                  "currency": "XOF",
+                  "source_id": "src-project-annonce",
+                  "accessed_at": "2026-08-30"
+                }
+              },
+              {
+                "typology": "Villa T4",
+                "surface_sqm": 180,
+                "bedrooms": 4,
+                "bathrooms": 3,
+                "price": {
+                  "type": "fixed",
+                  "value": 120000000,
+                  "currency": "XOF",
+                  "source_id": "src-project-annonce",
+                  "accessed_at": "2026-08-30"
+                }
+              }
+            ]
+          },
+          "characteristics": [
+            { "label": "Nombre de bâtiments", "value": "3" },
+            { "label": "Hauteur", "value": "R+4" },
+            { "label": "Piscine", "value": "Oui" },
+            { "label": "Parking", "value": "En sous-sol" },
+            { "label": "Ascenseur", "value": "Oui" },
+            { "label": "Espaces verts", "value": "1 200 m²" },
+            { "label": "Sécurité", "value": "Gardiennage 24h/24" }
+          ],
+          "timeline": [
+            { "date": "2023-06", "label": "Lancement commercial", "source_id": "src-project-annonce" },
+            { "date": "2024-02", "label": "Début des travaux", "source_id": "src-project-permis" },
+            { "date": "2026-Q4", "label": "Livraison annoncée", "source_id": "src-project-annonce" }
+          ],
+          "public_information": [
+            {
+              "title": "Calendrier revu",
+              "description": "La livraison initialement annoncée pour fin 2025 a été repoussée au dernier trimestre 2026, selon l'annonce officielle mise à jour.",
+              "source_id": "src-project-annonce"
+            }
+          ],
+          "data_quality": "high",
+          "last_verified": "2026-08-30",
+          "sources": [
+            {
+              "id": "src-project-permis",
+              "type": "document_public",
+              "title": "Permis de construire consulté en mairie",
+              "url": "https://example.com/sources/teranga-bay-permis",
+              "accessed_at": "2026-08-15"
+            },
+            {
+              "id": "src-project-annonce",
+              "type": "annonce_immobiliere",
+              "title": "Page officielle du programme",
+              "url": "https://example.com/teranga-immo/teranga-bay",
+              "published_at": "2026-06-01",
+              "accessed_at": "2026-08-30"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "promoter-amadou-ba",
+      "name": "Amadou Ba",
+      "sources": [],
+      "projects": [
+        {
+          "id": "project-terrain-diamniadio",
+          "name": "Terrain à Diamniadio (particulier)",
+          "location": {
+            "district": "Diamniadio",
+            "city": "Dakar",
+            "latitude": null,
+            "longitude": null,
+            "precision": "district"
+          },
+          "sources": [
+            {
+              "id": "src-amadou-annonce",
+              "type": "annonce_immobiliere",
+              "title": "Annonce consultée sur un groupe Facebook public",
+              "url": "https://example.com/sources/amadou-ba-annonce",
+              "accessed_at": "2026-08-28"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

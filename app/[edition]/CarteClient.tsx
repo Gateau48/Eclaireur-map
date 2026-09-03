@@ -13,114 +13,137 @@ import {
 import { SearchBar, type SearchResult } from "@/components/SearchBar";
 import { DetailPanel } from "@/components/DetailPanel";
 import { StatusLegend } from "@/components/StatusLegend";
-import { findPromoter, type Point, type Promoter } from "@/lib/schema";
-import { STATUS_SOLID_CLASS } from "@/lib/status";
-import { clusterPoints } from "@/lib/clustering";
+import { type PanelView, findProjectAndPromoter, findPromoterById } from "@/lib/panelview";
+import { PHASE_SOLID_CLASS } from "@/lib/status";
+import { clusterItems, type Cluster, type Clusterable } from "@/lib/clustering";
 import type { Edition } from "@/lib/editions";
+import type { EditionData, Project, Promoter } from "@/lib/schema";
 import { cn } from "@/lib/utils";
 
-interface Selection {
-  zoneId: string;
-  point: Point;
+interface MapProject extends Clusterable {
+  project: Project;
   promoter: Promoter;
-  initialTab: "projet" | "promoteur";
-  // Autres projets du même promoteur dans la zone, pour le renvoi croisé de
-  // risque dans le panneau (ex. "ce promoteur a aussi un projet confirmé
-  // ailleurs") — voir DetailPanel.tsx.
-  otherPointsFromPromoter: Point[];
 }
 
 export function CarteClient({ edition }: { edition: Edition }) {
-  const [selection, setSelection] = useState<Selection | null>(null);
+  const [editionData, setEditionData] = useState<EditionData | null>(null);
+  const [panelHistory, setPanelHistory] = useState<PanelView[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // La carte gère son propre déplacement via ses gestes — pas de scroll de
-  // page sur cette route.
   useEffect(() => {
     document.body.classList.add("map-route");
     return () => document.body.classList.remove("map-route");
   }, []);
 
-  const primaryZone = edition.zones[0];
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/search/${edition.id}`);
+        if (!res.ok) throw new Error("Failed to fetch edition data");
+        const data: EditionData = await res.json();
+        if (!cancelled) setEditionData(data);
+      } catch (err) {
+        console.error("Failed to load edition data:", err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [edition.id]);
 
-  // Lookup pointId -> zoneId : les marqueurs sont maintenant rendus tous
-  // ensemble (voir AllPoints ci-dessous), pas zone par zone, pour que le
-  // clustering fonctionne aussi entre zones proches, pas seulement à
-  // l'intérieur d'une même zone.
-  const zoneIdByPointId = useMemo(() => {
-    const lookup: Record<string, string> = {};
-    for (const zone of edition.zones) {
-      for (const point of zone.points) lookup[point.id] = zone.zone_id;
-    }
-    return lookup;
-  }, [edition]);
+  const currentView: PanelView | null = panelHistory.length > 0 ? panelHistory[panelHistory.length - 1] : null;
+  const canGoBack = panelHistory.length > 1;
 
-  const allPoints = useMemo(() => edition.zones.flatMap((z) => z.points), [edition]);
-
-  function selectPoint(zoneId: string, point: Point, initialTab: "projet" | "promoteur" = "projet") {
-    const zone = edition.zones.find((z) => z.zone_id === zoneId);
-    if (!zone) return;
-    const promoter = findPromoter(zone.promoters, point.promoter_id);
-    if (!promoter) return;
-    const otherPointsFromPromoter = zone.points.filter(
-      (p) => p.promoter_id === promoter.id && p.id !== point.id
-    );
-    setSelection({ zoneId, point, promoter, initialTab, otherPointsFromPromoter });
+  function openProject(projectId: string) {
+    if (!editionData) return;
+    const result = findProjectAndPromoter(editionData, projectId);
+    if (!result) return;
+    setPanelHistory((h) => [...h, { type: "project", project: result.project, promoter: result.promoter }]);
   }
 
-  function handleSelectSearchResult(result: SearchResult) {
-    const zone = edition.zones.find((z) =>
-      result.kind === "projet"
-        ? z.points.some((p) => p.id === result.point.id)
-        : z.promoters.some((p) => p.id === result.promoter.id)
-    );
-    if (!zone) return;
+  function openPromoter(promoterId: string) {
+    if (!editionData) return;
+    const promoter = findPromoterById(editionData, promoterId);
+    if (!promoter) return;
+    setPanelHistory((h) => [...h, { type: "promoter", promoter }]);
+  }
 
-    const targetPoint = result.kind === "projet" ? result.point : result.primaryPoint;
-    selectPoint(zone.zone_id, targetPoint, result.kind === "projet" ? "projet" : "promoteur");
+  function handleBack() {
+    setPanelHistory((h) => h.slice(0, -1));
+  }
+
+  function handleClose() {
+    setPanelHistory([]);
+  }
+
+  const allMapProjects: MapProject[] = useMemo(() => {
+    if (!editionData) return [];
+    return editionData.promoters.flatMap((promoter) =>
+      promoter.projects
+        .filter((p) => p.location.latitude !== null && p.location.longitude !== null)
+        .map((project) => ({
+          id: project.id,
+          coordinates: { lat: project.location.latitude!, lng: project.location.longitude! },
+          project,
+          promoter
+        }))
+    );
+  }, [editionData]);
+
+  const defaultCenter: [number, number] = useMemo(() => {
+    if (allMapProjects.length === 0) return [-17.444, 14.693]; // Dakar fallback
+    const avgLat = allMapProjects.reduce((s, p) => s + p.coordinates.lat, 0) / allMapProjects.length;
+    const avgLng = allMapProjects.reduce((s, p) => s + p.coordinates.lng, 0) / allMapProjects.length;
+    return [avgLng, avgLat];
+  }, [allMapProjects]);
+
+  function handleSelectSearchResult(result: SearchResult) {
+    if (result.kind === "projet") {
+      openProject(result.project.id);
+    } else {
+      openPromoter(result.promoter.id);
+    }
+  }
+
+  if (loading || !editionData) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center bg-neutral-100 dark:bg-neutral-900">
+        <p className="text-sm text-neutral-500">Chargement…</p>
+      </div>
+    );
   }
 
   return (
     <div className="absolute inset-0 h-full w-full">
-      {/* Couche 0 */}
-      <Map center={[primaryZone.zone_center.lng, primaryZone.zone_center.lat]} zoom={12}>
-        <AllPoints
-          points={allPoints}
-          onSelect={(point) => {
-            const zoneId = zoneIdByPointId[point.id];
-            if (zoneId) selectPoint(zoneId, point);
-          }}
+      <Map center={defaultCenter} zoom={12}>
+        <AllProjects
+          projects={allMapProjects}
+          onSelect={(mp) => openProject(mp.project.id)}
         />
 
-        {/* Couche 1 — contrôles flottants */}
         <MapControls className="absolute bottom-6 right-4 z-10" />
         <StatusLegend className="absolute bottom-6 left-4 z-10 md:bottom-6" />
-        <SheetPadder selection={selection} />
+        <SheetPadder currentView={currentView} />
       </Map>
 
-      <SearchBar zones={edition.zones} onSelect={handleSelectSearchResult} />
+      <SearchBar edition={editionData} onSelect={handleSelectSearchResult} />
 
-      {/* Couche 2 — panneau de détail (Vaul) */}
       <DetailPanel
-        point={selection?.point ?? null}
-        promoter={selection?.promoter ?? null}
-        otherPointsFromPromoter={selection?.otherPointsFromPromoter ?? []}
-        initialTab={selection?.initialTab}
-        onClose={() => setSelection(null)}
-        onSelectOtherPoint={(point) => selection && selectPoint(selection.zoneId, point, "projet")}
-        onSheetHeightChange={(heightPx) => {
-          sheetHeightListeners.forEach((fn) => fn(heightPx));
-        }}
+        view={currentView}
+        canGoBack={canGoBack}
+        onClose={handleClose}
+        onBack={handleBack}
+        onOpenProject={openProject}
+        onOpenPromoter={openPromoter}
       />
     </div>
   );
 }
 
-/** Registre d'écouteurs pour transmettre la hauteur de la feuille au
- *  composant interne à <Map> (seul à avoir accès à l'instance MapLibre via
- *  useMap()), sans faire remonter l'instance de carte plus haut. */
 const sheetHeightListeners = new Set<(heightPx: number) => void>();
 
-function SheetPadder({ selection }: { selection: Selection | null }) {
+function SheetPadder({ currentView }: { currentView: PanelView | null }) {
   const { map } = useMap();
 
   useEffect(() => {
@@ -129,58 +152,45 @@ function SheetPadder({ selection }: { selection: Selection | null }) {
       map.easeTo({ padding: { bottom: heightPx, top: 0, left: 0, right: 0 }, duration: 300 });
     };
     sheetHeightListeners.add(listener);
-    return () => {
-      sheetHeightListeners.delete(listener);
-    };
+    return () => { sheetHeightListeners.delete(listener); };
   }, [map]);
 
-  // Recentre le point sélectionné au-dessus du panneau à l'ouverture.
   useEffect(() => {
-    if (!map || !selection) return;
-    map.easeTo({
-      center: [selection.point.coordinates.lng, selection.point.coordinates.lat],
-      duration: 300
-    });
-  }, [map, selection]);
+    if (!map || !currentView) return;
+    if (currentView.type === "project") {
+      const loc = currentView.project.location;
+      if (loc.latitude !== null && loc.longitude !== null) {
+        map.easeTo({ center: [loc.longitude, loc.latitude], duration: 300 });
+      }
+    }
+  }, [map, currentView]);
 
   return null;
 }
 
-function AllPoints({
-  points,
+function AllProjects({
+  projects,
   onSelect
 }: {
-  points: Point[];
-  onSelect: (point: Point) => void;
+  projects: MapProject[];
+  onSelect: (mp: MapProject) => void;
 }) {
   const { map, zoom } = useMap();
-  // Throttle : arrondir le zoom à l'entier le plus proche avant de filtrer,
-  // pour éviter des re-renders excessifs pendant un pincement continu.
   const roundedZoom = Math.round(zoom);
 
-  const visiblePoints = useMemo(
-    () => points.filter((p) => roundedZoom >= p.zoom_min_marker),
-    [points, roundedZoom]
-  );
-
-  // GARDE-FOU : au-delà de quelques dizaines de points visibles simultanément,
-  // des marqueurs individuels deviennent une "confetti" illisible — on
-  // regroupe alors par proximité. Le seuil (36) est volontairement bas :
-  // mieux vaut regrouper un peu trop tôt qu'avoir un fouillis visuel.
-  const clusters = useMemo(
-    () => (visiblePoints.length > 36 ? clusterPoints(visiblePoints, roundedZoom) : null),
-    [visiblePoints, roundedZoom]
+  const clusters: Cluster<MapProject>[] | null = useMemo(
+    () => (projects.length > 36 ? clusterItems(projects, roundedZoom) : null),
+    [projects, roundedZoom]
   );
 
   if (clusters) {
     return (
       <>
         {clusters.map((cluster) =>
-          cluster.points.length === 1 ? (
-            <SinglePoint
-              key={cluster.points[0].id}
-              point={cluster.points[0]}
-              showLabel={roundedZoom >= cluster.points[0].zoom_min_label}
+          cluster.items.length === 1 ? (
+            <SingleProject
+              key={cluster.items[0].id}
+              mp={cluster.items[0]}
               onSelect={onSelect}
             />
           ) : (
@@ -189,8 +199,8 @@ function AllPoints({
               cluster={cluster}
               onZoomIn={() => {
                 if (!map) return;
-                const lats = cluster.points.map((p) => p.coordinates.lat);
-                const lngs = cluster.points.map((p) => p.coordinates.lng);
+                const lats = cluster.items.map((p) => p.coordinates.lat);
+                const lngs = cluster.items.map((p) => p.coordinates.lng);
                 map.fitBounds(
                   [
                     [Math.min(...lngs), Math.min(...lats)],
@@ -208,48 +218,42 @@ function AllPoints({
 
   return (
     <>
-      {visiblePoints.map((point) => (
-        <SinglePoint
-          key={point.id}
-          point={point}
-          showLabel={roundedZoom >= point.zoom_min_label}
-          onSelect={onSelect}
-        />
+      {projects.map((mp) => (
+        <SingleProject key={mp.id} mp={mp} onSelect={onSelect} />
       ))}
     </>
   );
 }
 
-function SinglePoint({
-  point,
-  showLabel,
+function SingleProject({
+  mp,
   onSelect
 }: {
-  point: Point;
-  showLabel: boolean;
-  onSelect: (point: Point) => void;
+  mp: MapProject;
+  onSelect: (mp: MapProject) => void;
 }) {
+  const phase = mp.project.status?.phase ?? "inconnu";
   return (
-    <MapMarker longitude={point.coordinates.lng} latitude={point.coordinates.lat}>
+    <MapMarker longitude={mp.coordinates.lng} latitude={mp.coordinates.lat}>
       <MarkerContent>
         <div className="group relative">
           <div
-            onClick={() => onSelect(point)}
+            onClick={() => onSelect(mp)}
             role="button"
             tabIndex={0}
-            aria-label={point.name}
+            aria-label={mp.project.name}
             onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") onSelect(point);
+              if (e.key === "Enter" || e.key === " ") onSelect(mp);
             }}
             className={cn(
               "size-4 cursor-pointer rounded-full border-2 border-white shadow-lg transition-transform hover:scale-110",
-              STATUS_SOLID_CLASS[point.status]
+              PHASE_SOLID_CLASS[phase]
             )}
           />
-          <MarkerTooltip>{point.name}</MarkerTooltip>
+          <MarkerTooltip>{mp.project.name}</MarkerTooltip>
         </div>
       </MarkerContent>
-      {showLabel && <MarkerLabel position="bottom">{point.name}</MarkerLabel>}
+      <MarkerLabel position="bottom">{mp.project.name}</MarkerLabel>
     </MapMarker>
   );
 }
@@ -258,7 +262,7 @@ function ClusterBubble({
   cluster,
   onZoomIn
 }: {
-  cluster: ReturnType<typeof clusterPoints>[number];
+  cluster: Cluster<MapProject>;
   onZoomIn: () => void;
 }) {
   return (
@@ -267,13 +271,10 @@ function ClusterBubble({
         <button
           type="button"
           onClick={onZoomIn}
-          aria-label={`${cluster.points.length} projets à cet endroit, zoomer pour les voir`}
-          className={cn(
-            "flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-2 border-white text-xs font-semibold text-white shadow-lg transition-transform hover:scale-105",
-            STATUS_SOLID_CLASS[cluster.worstStatus]
-          )}
+          aria-label={`${cluster.items.length} projets à cet endroit, zoomer pour les voir`}
+          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-neutral-600 text-xs font-semibold text-white shadow-lg transition-transform hover:scale-105"
         >
-          {cluster.points.length}
+          {cluster.items.length}
         </button>
       </MarkerContent>
     </MapMarker>

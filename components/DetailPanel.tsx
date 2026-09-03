@@ -4,58 +4,30 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Drawer } from "vaul";
 import {
-  AlertTriangle,
   ArrowUpRight,
-  BadgeCheck,
+  Building2,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ExternalLink,
-  Flag,
-  Gavel,
-  Home,
-  Landmark,
-  Newspaper,
-  ShieldCheck,
-  Sparkles,
-  Timer,
+  Globe,
+  Info,
+  MapPin,
   X
 } from "lucide-react";
-import { cn, formatLastVerified } from "@/lib/utils";
-import {
-  groupSourcesByCategory,
-  type Point,
-  type Promoter,
-  type Source
-} from "@/lib/schema";
-import {
-  ISSUE_CATEGORY_LABELS,
-  STATUS_ICON_CLASS,
-  STATUS_ICONS,
-  STATUS_LABELS,
-  STATUS_SOFT_CLASS
-} from "@/lib/status";
-
-const SOURCE_ICONS: Record<Source["category"], typeof Newspaper> = {
-  presse: Newspaper,
-  justice: Gavel,
-  officiel: Landmark,
-  reseaux_sociaux: Sparkles
-};
+import { cn, formatPrice } from "@/lib/utils";
+import { groupSourcesByType, PROJECT_PHASE_LABELS, type Project, type Promoter, type Source } from "@/lib/schema";
+import type { PanelView } from "@/lib/panelview";
 
 const SNAP_POINTS = [0.15, 0.5, 0.92] as const;
-type Tab = "projet" | "promoteur";
 
 interface DetailPanelProps {
-  point: Point | null;
-  promoter: Promoter | null;
-  /** Autres projets du même promoteur — pour le renvoi croisé de risque :
-   *  un projet "agréé" ne doit pas masquer un problème confirmé ailleurs
-   *  chez le même promoteur. C'est le genre de trou qu'un promoteur
-   *  malhonnête exploiterait. */
-  otherPointsFromPromoter: Point[];
-  initialTab?: Tab;
+  view: PanelView | null;
+  canGoBack: boolean;
   onClose: () => void;
-  onSelectOtherPoint: (point: Point) => void;
-  onSheetHeightChange: (heightPx: number) => void;
+  onBack: () => void;
+  onOpenProject: (projectId: string) => void;
+  onOpenPromoter: (promoterId: string) => void;
 }
 
 function useIsDesktop() {
@@ -70,86 +42,38 @@ function useIsDesktop() {
   return isDesktop;
 }
 
-export function DetailPanel({
-  point,
-  promoter,
-  otherPointsFromPromoter,
-  initialTab = "projet",
-  onClose,
-  onSelectOtherPoint,
-  onSheetHeightChange
-}: DetailPanelProps) {
+export function DetailPanel({ view, canGoBack, onClose, onBack, onOpenProject, onOpenPromoter }: DetailPanelProps) {
   const isDesktop = useIsDesktop();
   const [snap, setSnap] = useState<number | string | null>(SNAP_POINTS[1]);
-  const [tab, setTab] = useState<Tab>(initialTab);
 
   useEffect(() => {
-    if (!point) return;
-    setSnap(SNAP_POINTS[1]);
-    setTab(initialTab);
-  }, [point, initialTab]);
+    if (view) setSnap(SNAP_POINTS[1]);
+  }, [view]);
 
   // GARDE-FOU : contourne un bug connu de Vaul en usage contrôlé avec
   // modal={false} — Vaul pose `document.body.style.pointerEvents = 'none'`
   // à l'ouverture et ne le réinitialise pas correctement quand `open` est
   // piloté par notre propre état plutôt que par <Drawer.Trigger>
   // (voir https://github.com/emilkowalski/vaul/issues/509 et /issues/534).
-  // Sans ce correctif, la carte et la barre de recherche deviennent
-  // injoignables dès que le panneau est ouvert.
   useEffect(() => {
-    if (!point) return;
+    if (!view) return;
     const resetPointerEvents = () => {
-      if (document.body.style.pointerEvents === "none") {
-        document.body.style.pointerEvents = "";
-      }
+      if (document.body.style.pointerEvents === "none") document.body.style.pointerEvents = "";
     };
     resetPointerEvents();
     const observer = new MutationObserver(resetPointerEvents);
     observer.observe(document.body, { attributes: true, attributeFilter: ["style"] });
     return () => observer.disconnect();
-  }, [point]);
-
-  useEffect(() => {
-    if (isDesktop) {
-      onSheetHeightChange(0);
-      return;
-    }
-    const ratio = typeof snap === "number" ? snap : 0;
-    onSheetHeightChange(Math.round(ratio * window.innerHeight));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [snap, isDesktop, point]);
-
-  if (!point || !promoter) {
-    return (
-      <Drawer.Root open={false} direction={isDesktop ? "right" : "bottom"}>
-        <Drawer.Portal>
-          <Drawer.Content />
-        </Drawer.Portal>
-      </Drawer.Root>
-    );
-  }
-
-  const totalSources =
-    tab === "projet" ? point.sources.length : promoter.sources.length;
-  const BannerIcon = STATUS_ICONS[point.status];
-
-  // Renvoi croisé : d'autres projets du même promoteur ont-ils un statut
-  // différent (potentiellement pire) que celui affiché ici ?
-  const riskRank: Record<Point["status"], number> = { agree: 0, rumeur: 1, confirme: 2 };
-  const worseElsewhere = otherPointsFromPromoter.filter(
-    (p) => riskRank[p.status] > riskRank[point.status]
-  );
+  }, [view]);
 
   return (
     <Drawer.Root
-      open={!!point}
+      open={!!view}
       onOpenChange={(open) => !open && onClose()}
       direction={isDesktop ? "right" : "bottom"}
       snapPoints={isDesktop ? undefined : [...SNAP_POINTS]}
       activeSnapPoint={snap}
       setActiveSnapPoint={setSnap}
-      // GARDE-FOU : pas d'overlay sombre, la carte reste visible/interactive
-      // derrière — comportement Google Maps, pas un modal classique.
       modal={false}
     >
       <Drawer.Portal>
@@ -163,140 +87,42 @@ export function DetailPanel({
         >
           <Drawer.Handle className="mx-auto mt-2 h-1 w-9 shrink-0 rounded-full bg-neutral-400/60 md:hidden" />
 
-          {/* Bandeau de statut — l'info la plus importante du produit,
-              toujours la plus visible, quel que soit l'onglet. Fond teinté
-              pastel + icône/texte de la même teinte foncée, jamais un aplat
-              saturé : c'est le traitement "épuré" façon Apple Health/Wallet,
-              pas un bloc de couleur criard. La couleur pleine reste
-              réservée aux petits éléments (points sur la carte). */}
-          <div
-            className={cn(
-              "mx-4 mt-4 flex items-start gap-2.5 rounded-2xl px-4 py-3",
-              STATUS_SOFT_CLASS[point.status]
+          {/* Barre de navigation du panneau — retour si on a navigué
+              (projet → promoteur), toujours une fermeture explicite. */}
+          <div className="flex items-center justify-between px-4 pt-3">
+            {canGoBack ? (
+              <button
+                type="button"
+                onClick={onBack}
+                className="flex items-center gap-1 rounded-full px-2 py-1 text-sm text-teal-700 hover:bg-black/5 dark:text-teal-400 dark:hover:bg-white/10"
+              >
+                <ChevronLeft className="h-4 w-4" aria-hidden />
+                Retour
+              </button>
+            ) : (
+              <span />
             )}
-          >
-            <BannerIcon className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
-            <div className="min-w-0">
-              <p className="flex flex-wrap items-center gap-1.5 text-sm font-semibold">
-                {STATUS_LABELS[point.status]}
-                {point.issue_category && (
-                  <span className="rounded-full bg-black/10 px-2 py-0.5 text-[11px] font-medium dark:bg-white/15">
-                    {ISSUE_CATEGORY_LABELS[point.issue_category]}
-                  </span>
-                )}
-              </p>
-              <p className="mt-0.5 text-xs leading-snug opacity-90">{point.summary}</p>
-            </div>
             <button
               type="button"
               onClick={onClose}
               aria-label="Fermer le panneau"
-              className="ml-auto hidden h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-black/10 dark:hover:bg-white/10 md:flex"
+              className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10"
             >
               <X className="h-4 w-4" aria-hidden />
             </button>
           </div>
 
-          {/* Renvoi croisé : ce promoteur a un autre projet plus préoccupant
-              ailleurs — l'info qu'un profil "propre" en façade ne doit pas
-              cacher. */}
-          {worseElsewhere.length > 0 && (
-            <button
-              type="button"
-              onClick={() => onSelectOtherPoint(worseElsewhere[0])}
-              className="mx-4 mt-2 flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-2 text-left text-xs text-amber-800 hover:bg-amber-100 dark:bg-amber-400/10 dark:text-amber-300 dark:hover:bg-amber-400/20"
-            >
-              <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              <span className="flex-1">
-                {promoter.name} a {worseElsewhere.length > 1 ? "d'autres projets" : "un autre projet"}{" "}
-                marqué{worseElsewhere.length > 1 ? "s" : ""}{" "}
-                <strong>{STATUS_LABELS[worseElsewhere[0].status]}</strong> ailleurs
-              </span>
-              <ArrowUpRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            </button>
-          )}
-
-          <div className="flex-1 overflow-y-auto px-6 pb-8 pt-4">
-            {/* En-tête nom + preuve visible d'un coup d'œil */}
-            <div className="mb-3">
-              <h1 className="text-xl font-semibold leading-tight">
-                {tab === "projet" ? point.name : promoter.name}
-              </h1>
-              <p className="mt-0.5 text-sm text-neutral-500">
-                {tab === "projet" ? `Promoteur ${promoter.name}` : `${promoter.quartier}`}
-              </p>
-              <p className="mt-1.5 text-xs text-neutral-400">
-                {totalSources} source{totalSources > 1 ? "s" : ""} vérifiable
-                {totalSources > 1 ? "s" : ""} · {formatLastVerified(point.last_verified)}
-              </p>
-            </div>
-
-            {/* Badges promoteur — expérience, certification, portefeuille */}
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-600 px-3 py-1.5 text-xs font-medium text-white">
-                <Timer className="h-3.5 w-3.5" aria-hidden />
-                {promoter.years_experience} ans d&rsquo;expérience
-              </span>
-              {promoter.certified && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 px-3 py-1.5 text-xs font-medium text-sky-800 dark:bg-sky-400/20 dark:text-sky-300">
-                  <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
-                  Certifié
-                </span>
-              )}
-              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-300">
-                <Home className="h-3.5 w-3.5" aria-hidden />
-                {promoter.property_count > 1
-                  ? `+ de ${promoter.property_count} propriétés`
-                  : "1 propriété recensée"}
-              </span>
-            </div>
-
-            {/* Deux photos côte à côte : le projet, puis le promoteur */}
-            <div className="mb-4 grid grid-cols-2 gap-2">
-              <PhotoTile src={point.project_photo_url} alt={point.name} />
-              <PhotoTile src={promoter.photo_url} alt={promoter.name} rounded />
-            </div>
-
-            {/* Onglets — Ce projet / Promoteur */}
-            <div className="mb-4 flex gap-5 border-b border-black/10 dark:border-white/10">
-              <TabButton active={tab === "projet"} onClick={() => setTab("projet")}>
-                Ce projet
-              </TabButton>
-              <TabButton active={tab === "promoteur"} onClick={() => setTab("promoteur")}>
-                Historique du promoteur
-              </TabButton>
-            </div>
-
-            {tab === "projet" ? (
-              <>
-                <AboutCard title={`À propos de ${point.name}`} bullets={[point.summary]} />
-                <SourcesList sources={point.sources} />
-              </>
-            ) : (
-              <>
-                {promoter.registration_number && (
-                  <p className="mb-4 flex items-center gap-2 rounded-xl bg-black/5 px-3 py-2 text-xs text-neutral-600 dark:bg-white/5 dark:text-neutral-300">
-                    <BadgeCheck className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                    Immatriculation : {promoter.registration_number}
-                  </p>
-                )}
-                <AboutCard title={`À propos de ${promoter.name}`} bullets={promoter.about} />
-                {otherPointsFromPromoter.length > 0 && (
-                  <OtherProjects points={otherPointsFromPromoter} onSelect={onSelectOtherPoint} />
-                )}
-                <SourcesList sources={promoter.sources} />
-              </>
+          <div className="flex-1 overflow-y-auto px-6 pb-8 pt-2">
+            {view?.type === "project" && (
+              <ProjectView
+                project={view.project}
+                promoter={view.promoter}
+                onOpenPromoter={() => onOpenPromoter(view.promoter.id)}
+              />
             )}
-
-            <a
-              href={`mailto:contact@eclaireurmap.com?subject=${encodeURIComponent(
-                `Signalement — ${tab === "projet" ? point.name : promoter.name}`
-              )}`}
-              className="mt-6 flex items-center justify-center gap-1.5 text-xs text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-300"
-            >
-              <Flag className="h-3.5 w-3.5" aria-hidden />
-              Signaler une erreur ou une information manquante
-            </a>
+            {view?.type === "promoter" && (
+              <PromoterView promoter={view.promoter} onOpenProject={onOpenProject} />
+            )}
           </div>
         </Drawer.Content>
       </Drawer.Portal>
@@ -304,169 +130,345 @@ export function DetailPanel({
   );
 }
 
-function PhotoTile({ src, alt, rounded }: { src: string; alt: string; rounded?: boolean }) {
-  return (
-    <div
-      className={cn(
-        "relative aspect-[4/3] overflow-hidden bg-neutral-200 dark:bg-neutral-800",
-        rounded ? "rounded-2xl" : "rounded-2xl"
-      )}
-    >
-      <Image src={src} alt={alt} fill sizes="200px" className="object-cover" />
-    </div>
-  );
-}
+// ---------------------------------------------------------------------------
+// Vue PROJET — HEADER / APERÇU / CARACTÉRISTIQUES / UNITÉS / PROMOTEUR /
+// TIMELINE / À SAVOIR / SOURCES — chaque section masquée si sa donnée est absente.
+// ---------------------------------------------------------------------------
 
-function TabButton({
-  active,
-  onClick,
-  children
+function ProjectView({
+  project,
+  promoter,
+  onOpenPromoter
 }: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
+  project: Project;
+  promoter: Promoter;
+  onOpenPromoter: () => void;
 }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "-mb-px border-b-2 pb-2 text-sm font-medium transition-colors",
-        active
-          ? "border-teal-600 text-teal-700 dark:text-teal-400"
-          : "border-transparent text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200"
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
-function AboutCard({ title, bullets }: { title: string; bullets: string[] }) {
-  return (
-    <div className="mb-5 rounded-2xl bg-violet-50 p-4 dark:bg-violet-400/10">
-      <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-violet-900 dark:text-violet-200">
-        <Sparkles className="h-4 w-4" aria-hidden />
-        {title}
-      </h2>
-      <ul className="space-y-2">
-        {bullets.map((bullet, i) => (
-          <li
-            key={i}
-            className="text-[15px] leading-relaxed text-neutral-700 dark:text-neutral-300"
-          >
-            {bullet}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function OtherProjects({
-  points,
-  onSelect
-}: {
-  points: Point[];
-  onSelect: (point: Point) => void;
-}) {
-  return (
-    <div className="mb-5">
-      <h2 className="mb-2 text-sm font-semibold text-neutral-500">Autres projets de ce promoteur</h2>
-      <ul className="space-y-1.5">
-        {points.map((p) => {
-          const Icon = STATUS_ICONS[p.status];
-          return (
-            <li key={p.id}>
-              <button
-                type="button"
-                onClick={() => onSelect(p)}
-                className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-sm hover:bg-black/5 dark:hover:bg-white/10"
-              >
-                <span
-                  className={cn(
-                    "flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
-                    STATUS_SOFT_CLASS[p.status]
-                  )}
-                >
-                  <Icon className="h-3.5 w-3.5" aria-hidden />
-                </span>
-                <span className="flex-1 truncate">{p.name}</span>
-                <span className="text-xs text-neutral-500">{STATUS_LABELS[p.status]}</span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
-}
-
-function SourcesList({ sources }: { sources: Source[] }) {
-  const groups = groupSourcesByCategory(sources);
-  const [openCategory, setOpenCategory] = useState<string | null>(
-    groups[0]?.category ?? null
-  );
+  const priceLabel = project.pricing?.summary ? formatPrice(project.pricing.summary) : null;
+  const unitCount = project.pricing?.by_unit?.length;
 
   return (
     <div>
-      <h2 className="mb-2 text-sm font-semibold text-neutral-500">Sources</h2>
-      <div className="space-y-2">
-        {groups.map((group) => {
-          const isOpen = openCategory === group.category;
-          const Icon = SOURCE_ICONS[group.category];
-          return (
-            <div key={group.category} className="overflow-hidden rounded-2xl bg-black/5 dark:bg-white/5">
+      {/* HEADER */}
+      {project.cover_image_url && (
+        <div className="relative -mx-6 mb-4 aspect-[16/10] overflow-hidden bg-neutral-200 dark:bg-neutral-800">
+          <Image src={project.cover_image_url} alt={project.name} fill sizes="420px" className="object-cover" />
+        </div>
+      )}
+
+      <h1 className="text-xl font-semibold leading-tight">{project.name}</h1>
+
+      <p className="mt-1 flex items-center gap-1.5 text-sm text-neutral-500">
+        <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
+        {[project.location.district, project.location.city].filter(Boolean).join(", ")}
+        {project.location.precision !== "exact" && (
+          <span className="text-neutral-400">· localisation approximative</span>
+        )}
+      </p>
+
+      <button
+        type="button"
+        onClick={onOpenPromoter}
+        className="mt-1.5 flex items-center gap-1 text-sm font-medium text-teal-700 hover:underline dark:text-teal-400"
+      >
+        {promoter.name}
+        <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+      </button>
+
+      {project.status && (
+        <span className="mt-3 inline-flex items-center rounded-full bg-black/5 px-3 py-1 text-xs font-medium text-neutral-600 dark:bg-white/10 dark:text-neutral-300">
+          {PROJECT_PHASE_LABELS[project.status.phase]}
+        </span>
+      )}
+      {project.status?.detail && (
+        <p className="mt-2 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+          {project.status.detail}
+        </p>
+      )}
+
+      {/* APERÇU — prix + quelques chiffres clés */}
+      {(priceLabel || unitCount) && (
+        <Section>
+          <div className="flex flex-wrap gap-x-6 gap-y-3">
+            {priceLabel && <Stat label="Prix" value={priceLabel} />}
+            {unitCount && <Stat label="Typologies" value={`${unitCount}`} />}
+          </div>
+        </Section>
+      )}
+
+      {/* CARACTÉRISTIQUES */}
+      {project.characteristics && project.characteristics.length > 0 && (
+        <Section title="Caractéristiques">
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5">
+            {project.characteristics.map((c) => (
+              <div key={c.label}>
+                <dt className="text-xs text-neutral-500">{c.label}</dt>
+                <dd className="text-sm font-medium">{c.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </Section>
+      )}
+
+      {/* UNITÉS */}
+      {project.pricing?.by_unit && project.pricing.by_unit.length > 0 && (
+        <Section title="Unités">
+          <ul className="divide-y divide-black/5 dark:divide-white/5">
+            {project.pricing.by_unit.map((unit, i) => (
+              <li key={i} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                <div>
+                  <p className="font-medium">{unit.typology}</p>
+                  <p className="text-xs text-neutral-500">
+                    {[
+                      unit.surface_sqm ? `${unit.surface_sqm} m²` : null,
+                      unit.bedrooms ? `${unit.bedrooms} ch.` : null,
+                      unit.bathrooms ? `${unit.bathrooms} sdb` : null
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                </div>
+                {unit.price && (
+                  <p className="shrink-0 text-sm font-medium">{formatPrice(unit.price)}</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+
+      {/* PROMOTEUR — aperçu, navigation vers sa fiche */}
+      <Section title="Promoteur">
+        <button
+          type="button"
+          onClick={onOpenPromoter}
+          className="flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left hover:bg-black/5 dark:hover:bg-white/10"
+        >
+          {promoter.photo_url ? (
+            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
+              <Image src={promoter.photo_url} alt={promoter.name} fill sizes="40px" className="object-cover" />
+            </div>
+          ) : (
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black/5 dark:bg-white/10">
+              <Building2 className="h-4 w-4 text-neutral-500" aria-hidden />
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium">{promoter.name}</p>
+            <p className="text-xs text-neutral-500">
+              {promoter.projects.length > 1
+                ? `${promoter.projects.length} projets identifiés`
+                : "1 projet identifié"}
+            </p>
+          </div>
+          <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400" aria-hidden />
+        </button>
+      </Section>
+
+      {/* TIMELINE */}
+      {project.timeline && project.timeline.length > 0 && (
+        <Section title="Historique">
+          <ol className="space-y-3">
+            {project.timeline.map((entry, i) => (
+              <li key={i} className="flex gap-3">
+                <span className="w-16 shrink-0 text-xs text-neutral-500">{entry.date}</span>
+                <span className="text-sm">{entry.label}</span>
+              </li>
+            ))}
+          </ol>
+        </Section>
+      )}
+
+      {/* À SAVOIR — fait documenté et sourcé, jamais un jugement */}
+      {project.public_information && project.public_information.length > 0 && (
+        <Section title="À savoir">
+          <ul className="space-y-3">
+            {project.public_information.map((item, i) => (
+              <li key={i} className="flex gap-2.5 rounded-2xl bg-black/5 px-3 py-2.5 dark:bg-white/5">
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-neutral-500" aria-hidden />
+                <div>
+                  <p className="text-sm font-medium">{item.title}</p>
+                  <p className="mt-0.5 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+                    {item.description}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+
+      <SourcesSection sources={project.sources} />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Vue PROMOTEUR — bio, à savoir, ses projets (chacun renvoie vers la carte)
+// ---------------------------------------------------------------------------
+
+function PromoterView({
+  promoter,
+  onOpenProject
+}: {
+  promoter: Promoter;
+  onOpenProject: (projectId: string) => void;
+}) {
+  return (
+    <div>
+      <div className="flex items-center gap-3">
+        {promoter.photo_url ? (
+          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
+            <Image src={promoter.photo_url} alt={promoter.name} fill sizes="56px" className="object-cover" />
+          </div>
+        ) : (
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-black/5 dark:bg-white/10">
+            <Building2 className="h-6 w-6 text-neutral-500" aria-hidden />
+          </div>
+        )}
+        <div className="min-w-0">
+          <h1 className="truncate text-xl font-semibold leading-tight">{promoter.name}</h1>
+          {promoter.legal_name && promoter.legal_name !== promoter.name && (
+            <p className="truncate text-sm text-neutral-500">{promoter.legal_name}</p>
+          )}
+        </div>
+      </div>
+
+      {promoter.company && (
+        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-neutral-500">
+          {promoter.company.activity && <span>{promoter.company.activity}</span>}
+          {promoter.company.founded_year && <span>Depuis {promoter.company.founded_year}</span>}
+          {promoter.company.website && (
+            <a
+              href={promoter.company.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-teal-700 hover:underline dark:text-teal-400"
+            >
+              <Globe className="h-3.5 w-3.5" aria-hidden />
+              Site officiel
+            </a>
+          )}
+        </div>
+      )}
+
+      {promoter.public_information && promoter.public_information.length > 0 && (
+        <Section title="À savoir">
+          <ul className="space-y-3">
+            {promoter.public_information.map((item, i) => (
+              <li key={i} className="flex gap-2.5 rounded-2xl bg-black/5 px-3 py-2.5 dark:bg-white/5">
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-neutral-500" aria-hidden />
+                <div>
+                  <p className="text-sm font-medium">{item.title}</p>
+                  <p className="mt-0.5 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+                    {item.description}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+
+      <Section title={promoter.projects.length > 1 ? "Ses projets" : "Son projet"}>
+        <ul className="divide-y divide-black/5 dark:divide-white/5">
+          {promoter.projects.map((project) => (
+            <li key={project.id}>
               <button
                 type="button"
-                onClick={() => setOpenCategory(isOpen ? null : group.category)}
-                className="flex w-full items-center justify-between px-4 py-3 text-left"
-                aria-expanded={isOpen}
+                onClick={() => onOpenProject(project.id)}
+                className="flex w-full items-center gap-3 py-2.5 text-left hover:bg-black/5 dark:hover:bg-white/10"
               >
-                <span className="flex items-center gap-2.5 text-sm font-medium">
-                  <Icon className="h-4 w-4 text-neutral-500" aria-hidden />
-                  {group.label}
-                  <span className="text-xs font-normal text-neutral-400">({group.items.length})</span>
-                </span>
-                <ChevronDown
-                  className={cn(
-                    "h-4 w-4 text-neutral-500 transition-transform",
-                    isOpen && "rotate-180"
-                  )}
-                  aria-hidden
-                />
+                {project.cover_image_url ? (
+                  <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-neutral-200 dark:bg-neutral-800">
+                    <Image src={project.cover_image_url} alt={project.name} fill sizes="44px" className="object-cover" />
+                  </div>
+                ) : (
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-black/5 dark:bg-white/10">
+                    <MapPin className="h-4 w-4 text-neutral-500" aria-hidden />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{project.name}</p>
+                  <p className="truncate text-xs text-neutral-500">
+                    {[project.location.district, project.location.city].filter(Boolean).join(", ")}
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400" aria-hidden />
               </button>
+            </li>
+          ))}
+        </ul>
+      </Section>
 
-              {isOpen && (
-                <ul>
-                  {group.items.map((source) => (
-                    <li key={source.url} className="border-t border-black/5 dark:border-white/5">
-                      <a
-                        href={source.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-black/5 dark:hover:bg-white/10"
-                      >
-                        <span className="flex-1 truncate">
-                          <span className="font-medium">{source.label}</span>
-                          {source.description && (
-                            <span className="text-neutral-500"> : {source.description}</span>
-                          )}
-                        </span>
-                        {group.category === "reseaux_sociaux" ? (
-                          <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-neutral-400" aria-hidden />
-                        ) : (
-                          <ExternalLink className="h-3.5 w-3.5 shrink-0 text-neutral-400" aria-hidden />
-                        )}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      <SourcesSection sources={promoter.sources} />
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Composants partagés
+// ---------------------------------------------------------------------------
+
+function Section({ title, children }: { title?: string; children: React.ReactNode }) {
+  return (
+    <div className="mt-5 border-t border-black/5 pt-5 first:mt-0 first:border-none first:pt-0 dark:border-white/5">
+      {title && <h2 className="mb-2.5 text-sm font-semibold">{title}</h2>}
+      {children}
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs text-neutral-500">{label}</p>
+      <p className="text-base font-semibold">{value}</p>
+    </div>
+  );
+}
+
+function SourcesSection({ sources }: { sources: Source[] }) {
+  const [open, setOpen] = useState(false);
+  if (sources.length === 0) return null;
+  const groups = groupSourcesByType(sources);
+
+  return (
+    <Section>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between py-1 text-left"
+        aria-expanded={open}
+      >
+        <span className="text-sm font-semibold">Sources — {sources.length}</span>
+        <ChevronDown className={cn("h-4 w-4 text-neutral-500 transition-transform", open && "rotate-180")} aria-hidden />
+      </button>
+
+      {open && (
+        <div className="mt-2 space-y-4">
+          {groups.map((group) => (
+            <div key={group.type}>
+              <p className="mb-1.5 text-xs font-medium text-neutral-500">{group.label}</p>
+              <ul className="space-y-1">
+                {group.items.map((source) => (
+                  <li key={source.id}>
+                    <a
+                      href={source.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 rounded-xl px-2 py-1.5 text-sm hover:bg-black/5 dark:hover:bg-white/10"
+                    >
+                      <span className="flex-1 truncate">{source.title}</span>
+                      <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-neutral-400" aria-hidden />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+    </Section>
   );
 }
