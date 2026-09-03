@@ -67,6 +67,17 @@ export function DetailPanel({
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [tab, setTab] = useState<"apercu" | "prix" | "promoteur" | "photos">("apercu");
   const [lightboxPhoto, setLightboxPhoto] = useState<{ src: string; alt: string; index: number; all: { src: string; alt: string }[] } | null>(null);
+  const [viewportBottomOffset, setViewportBottomOffset] = useState(0);
+
+  useEffect(() => {
+    const onResize = () => {
+      const offset = window.innerHeight - (window.visualViewport?.height ?? window.innerHeight);
+      setViewportBottomOffset(Math.max(0, offset));
+    };
+    onResize();
+    window.visualViewport?.addEventListener("resize", onResize);
+    return () => window.visualViewport?.removeEventListener("resize", onResize);
+  }, []);
 
   useEffect(() => {
     setTab("apercu");
@@ -167,7 +178,7 @@ export function DetailPanel({
               ref={scrollRef}
               onScroll={handleContentScroll}
               className="flex-1 overflow-y-auto scroll-hidden"
-              style={{ touchAction: "pan-y", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+              style={{ touchAction: "pan-y", paddingBottom: viewportBottomOffset || undefined }}
             >
               <ProjectView
                 project={view.project}
@@ -187,7 +198,7 @@ export function DetailPanel({
               ref={scrollRef}
               onScroll={handleContentScroll}
               className="flex-1 overflow-y-auto scroll-hidden"
-              style={{ touchAction: "pan-y", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+              style={{ touchAction: "pan-y", paddingBottom: viewportBottomOffset || undefined }}
             >
               <PromoterView
                 promoter={view.promoter}
@@ -701,7 +712,7 @@ function PromoterView({
   onPhotoClick: (src: string, alt: string, index: number, all: { src: string; alt: string }[]) => void;
 }) {
   return (
-    <div className="px-4 pb-8 pt-2" style={{ paddingBottom: "calc(2rem + env(safe-area-inset-bottom, 0px))" }}>
+    <div className="px-4 pb-8 pt-2">
       <PromoterInline promoter={promoter} onOpenProject={onOpenProject} onPhotoClick={onPhotoClick} />
     </div>
   );

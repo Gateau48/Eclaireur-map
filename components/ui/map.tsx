@@ -76,7 +76,7 @@ export function Map({
       center,
       zoom,
       cooperativeGestures,
-      attributionControl: { compact: true }
+      attributionControl: false
     });
 
     // Rotation désactivée volontairement — carte toujours orientée nord

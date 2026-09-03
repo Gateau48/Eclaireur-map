@@ -88,6 +88,7 @@ export function CarteClient({ edition }: { edition: EditionData }) {
       <Map center={defaultCenter} zoom={12}>
         <MarkerLayer points={markerPoints} onSelect={(id) => openProject(id)} />
         <MapControls className="absolute bottom-6 right-4 z-10" />
+        <MapLegend className="absolute bottom-[120px] right-4 z-10 md:bottom-[88px]" />
         <MapSync view={view} snap={snap} />
       </Map>
 
@@ -97,8 +98,6 @@ export function CarteClient({ edition }: { edition: EditionData }) {
         hidden={snap === PANEL_SNAP_POINTS[2]}
         panelOpen={!!view}
       />
-
-      <MapLegend className="absolute bottom-28 left-4 z-10 md:bottom-6" />
 
       <DetailPanel
         view={view}
