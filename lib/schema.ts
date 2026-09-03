@@ -179,9 +179,7 @@ export const ProjectStatusSchema = z.object({
   source_id: z.string().optional()
 });
 
-export type ProjectPhase = z.infer<typeof ProjectPhaseSchema>;
-
-export const PROJECT_PHASE_LABELS: Record<ProjectPhase, string> = {
+export const PROJECT_PHASE_LABELS: Record<z.infer<typeof ProjectPhaseSchema>, string> = {
   annonce: "Annoncé",
   commercialisation: "En commercialisation",
   en_construction: "En construction",
@@ -201,6 +199,7 @@ export const ProjectSchema = z.object({
   // (voir demande explicite : l'image est candidate prioritaire). Comme
   // tout le reste : absent = pas affiché, jamais un placeholder gris.
   cover_image_url: z.string().url().optional(),
+  gallery: z.array(z.string().url()).optional(),
   location: LocationSchema,
   status: ProjectStatusSchema.optional(),
   pricing: z

@@ -41,6 +41,10 @@
           "id": "project-teranga-bay",
           "name": "Résidence Teranga Bay",
           "cover_image_url": "https://picsum.photos/seed/project-teranga-bay/800/600",
+          "gallery": [
+            "https://picsum.photos/seed/project-teranga-bay-2/800/600",
+            "https://picsum.photos/seed/project-teranga-bay-3/800/600"
+          ],
           "location": {
             "address": "Route des Almadies, non loin du phare",
             "district": "Almadies",

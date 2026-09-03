@@ -1,6 +1,6 @@
 import "server-only";
 import { supabase } from "./db/client";
-import { getEditionConfig } from "./editionsconfig";
+import { getEditionConfig } from "./editions-config";
 import { parseEditionData, type EditionData, type Project, type Promoter } from "./schema";
 
 // GARDE-FOU : import STATIQUE (pas de fs.readFileSync avec un chemin

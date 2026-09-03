@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { getEdition } from "@/lib/editions";
 import { getEditionData } from "@/lib/editions.server";
 import { CarteClient } from "./CarteClient";
 
@@ -7,11 +6,8 @@ import { CarteClient } from "./CarteClient";
 // l'accès (session + achat actif) — voir middleware.ts, Partie 6 du brief.
 // /[edition]/vente reste la route publique, jamais protégée.
 export default async function CartePage({ params }: { params: { edition: string } }) {
-  const edition = getEdition(params.edition);
+  const edition = await getEditionData(params.edition);
   if (!edition) notFound();
 
-  const editionData = await getEditionData(params.edition);
-  if (!editionData) notFound();
-
-  return <CarteClient editionData={editionData} />;
+  return <CarteClient edition={edition} />;
 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
-import { getEdition } from "@/lib/editions";
+import { getEditionConfig as getEdition } from "@/lib/editions-config";
 import { getChariowProduct, initChariowCheckout } from "@/lib/chariow";
 import { supabase } from "@/lib/db/client";
 

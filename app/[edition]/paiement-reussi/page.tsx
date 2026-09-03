@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
-import { getEdition } from "@/lib/editions";
+import { getEditionConfig as getEdition } from "@/lib/editions-config";
 import { AwaitingAccess } from "./AwaitingAccess";
 
 export default async function PaiementReussiPage({ params }: { params: { edition: string } }) {

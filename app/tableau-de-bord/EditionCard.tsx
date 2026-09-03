@@ -1,8 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
-import type { Edition } from "@/lib/editions";
+import type { EditionConfig } from "@/lib/editions-config";
 
-export function EditionCard({ edition, owned }: { edition: Edition; owned: boolean }) {
+export function EditionCard({ edition, owned }: { edition: EditionConfig; owned: boolean }) {
   const href = owned ? `/${edition.id}` : `/${edition.id}/vente`;
 
   return (

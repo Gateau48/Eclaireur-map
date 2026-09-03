@@ -1,18 +1,17 @@
 import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
-import { getEdition } from "@/lib/editions";
+import { getEditionConfig } from "@/lib/editions-config";
 import { getChariowProduct } from "@/lib/chariow";
 import { Nav } from "./Nav";
 import { Hero } from "./Hero";
 import { ProofStats } from "./ProofStats";
 import { HowItWorks } from "./HowItWorks";
-import { ProductPreview } from "./ProductPreview";
 import { PricingCTA } from "./PricingCTA";
 import { Footer } from "./Footer";
 
 export default async function VentePage({ params }: { params: { edition: string } }) {
-  const edition = getEdition(params.edition);
+  const edition = getEditionConfig(params.edition);
   if (!edition) notFound();
 
   const [session, product] = await Promise.all([
@@ -26,7 +25,6 @@ export default async function VentePage({ params }: { params: { edition: string 
       <Hero editionName={edition.name} />
       <ProofStats />
       <HowItWorks />
-      <ProductPreview />
       <PricingCTA
         editionId={edition.id}
         editionName={edition.name}

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/config";
 import { supabase } from "@/lib/db/client";
-import { getAllEditions } from "@/lib/editions";
+import { getAllEditionConfigs as getAllEditions } from "@/lib/editions-config";
 import { EditionCard } from "./EditionCard";
 
 export default async function TableauDeBordPage() {
