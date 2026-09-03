@@ -12,16 +12,14 @@ import {
   Globe,
   Info,
   MapPin,
+  Target,
   X
 } from "lucide-react";
 import { cn, formatPrice } from "@/lib/utils";
 import { groupSourcesByType, PROJECT_PHASE_LABELS, type Project, type Promoter, type Source } from "@/lib/schema";
+import { PHASE_TAG_COLOR } from "@/lib/status";
 import type { PanelView } from "@/lib/panel-view";
 
-// GARDE-FOU DE VALEURS : le point le plus bas est une hauteur en PIXELS
-// fixe (pas une fraction) — c'est juste assez pour "titre + X sur une
-// seule ligne", quelle que soit la taille de l'écran. Vaul accepte de
-// mélanger px et fractions dans le même tableau de snap points.
 export const PANEL_SNAP_POINTS = ["96px", 0.5, 0.92] as const;
 export type PanelSnap = (typeof PANEL_SNAP_POINTS)[number];
 
@@ -33,7 +31,6 @@ interface DetailPanelProps {
   onClose: () => void;
   onBack: () => void;
   onOpenProject: (projectId: string) => void;
-  onOpenPromoter: (promoterId: string) => void;
 }
 
 function useIsDesktop() {
@@ -55,38 +52,29 @@ export function DetailPanel({
   onSnapChange,
   onClose,
   onBack,
-  onOpenProject,
-  onOpenPromoter
+  onOpenProject
 }: DetailPanelProps) {
   const isDesktop = useIsDesktop();
   const isPeek = snap === PANEL_SNAP_POINTS[0];
-  const isFull = snap === PANEL_SNAP_POINTS[2];
 
-  // En-tête compact + menu à onglets : n'apparaît qu'une fois scrollé dans
-  // le contenu EN plein écran (comme Google Maps) — se réinitialise à
-  // chaque nouvelle sélection ou dès qu'on quitte le plein écran.
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setHeaderCollapsed(false);
+    setTab("apercu");
     scrollRef.current?.scrollTo({ top: 0 });
   }, [view]);
 
   useEffect(() => {
-    if (!isFull) setHeaderCollapsed(false);
-  }, [isFull]);
+    if (!isDesktop) setHeaderCollapsed(false);
+  }, [isDesktop]);
 
   function handleContentScroll() {
-    if (!isFull || !scrollRef.current) return;
+    if (!scrollRef.current) return;
     setHeaderCollapsed(scrollRef.current.scrollTop > 24);
   }
 
-  // GARDE-FOU : contourne un bug connu de Vaul en usage contrôlé avec
-  // modal={false} — Vaul pose `document.body.style.pointerEvents = 'none'`
-  // à l'ouverture et ne le réinitialise pas correctement quand `open` est
-  // piloté par notre propre état plutôt que par <Drawer.Trigger>
-  // (voir https://github.com/emilkowalski/vaul/issues/509 et /issues/534).
   useEffect(() => {
     if (!view) return;
     const resetPointerEvents = () => {
@@ -99,6 +87,14 @@ export function DetailPanel({
   }, [view]);
 
   const title = view?.type === "project" ? view.project.name : view?.promoter.name ?? "";
+  const statusPhase = view?.type === "project" ? view.project.status?.phase : undefined;
+  const statusLabel = statusPhase ? PROJECT_PHASE_LABELS[statusPhase] : undefined;
+  const statusColor = statusPhase ? PHASE_TAG_COLOR[statusPhase] : undefined;
+
+  const [tab, setTab] = useState<"apercu" | "prix" | "promoteur">("apercu");
+
+  const isFull = isDesktop || snap === PANEL_SNAP_POINTS[2];
+  const showTabBar = !isPeek && view?.type === "project";
 
   return (
     <Drawer.Root
@@ -108,9 +104,6 @@ export function DetailPanel({
       snapPoints={isDesktop ? undefined : [...PANEL_SNAP_POINTS]}
       activeSnapPoint={snap}
       setActiveSnapPoint={onSnapChange}
-      // GARDE-FOU : ne se ferme JAMAIS en glissant plus bas que le point le
-      // plus bas — seul le X ferme, comme demandé (comportement observé
-      // sur Google Maps : au plancher, glisser encore ne fait plus rien).
       dismissible={false}
       modal={false}
     >
@@ -119,16 +112,11 @@ export function DetailPanel({
           className={cn(
             "glass fixed z-20 flex flex-col outline-none",
             "inset-x-0 bottom-0 h-[92vh] rounded-t-4xl",
-            "md:inset-y-4 md:bottom-auto md:right-4 md:left-auto md:h-auto md:max-h-[calc(100vh-2rem)]",
-            "md:w-[420px] md:rounded-4xl"
+            "md:inset-y-0 md:bottom-0 md:right-0 md:left-auto md:h-full md:w-[480px] md:rounded-none md:border-l md:border-black/5"
           )}
         >
           <Drawer.Handle className="mx-auto mt-2 h-1 w-9 shrink-0 rounded-full bg-neutral-400/60 md:hidden" />
 
-          {/* Barre compacte, toujours visible : titre tronqué + retour +
-              fermer. Devient le SEUL contenu visible au repli (peek), et
-              redevient la barre sticky sous le contenu quand on scrolle en
-              plein écran (headerCollapsed). */}
           <div className="flex items-center gap-2 px-4 pb-2 pt-3">
             {canGoBack && (
               <button
@@ -147,6 +135,11 @@ export function DetailPanel({
               )}
             >
               {(isPeek || headerCollapsed) && title}
+              {isPeek && statusLabel && (
+                <span className={cn("ml-2 text-sm font-normal", statusColor)}>
+                  {statusLabel}
+                </span>
+              )}
             </h1>
             <button
               type="button"
@@ -158,19 +151,22 @@ export function DetailPanel({
             </button>
           </div>
 
-          {!isPeek && (
+          {!isPeek && view?.type === "project" && (
             <div ref={scrollRef} onScroll={handleContentScroll} className="flex-1 overflow-y-auto px-6 pb-8">
-              {view?.type === "project" && (
-                <ProjectView
-                  project={view.project}
-                  promoter={view.promoter}
-                  headerCollapsed={headerCollapsed}
-                  onOpenPromoter={() => onOpenPromoter(view.promoter.id)}
-                />
-              )}
-              {view?.type === "promoter" && (
-                <PromoterView promoter={view.promoter} onOpenProject={onOpenProject} />
-              )}
+              <ProjectView
+                project={view.project}
+                promoter={view.promoter}
+                tab={tab}
+                setTab={setTab}
+                showTabBar={showTabBar}
+                onOpenProject={onOpenProject}
+              />
+            </div>
+          )}
+
+          {!isPeek && view?.type === "promoter" && (
+            <div ref={scrollRef} onScroll={handleContentScroll} className="flex-1 overflow-y-auto px-6 pb-8">
+              <PromoterView promoter={view.promoter} onOpenProject={onOpenProject} />
             </div>
           )}
         </Drawer.Content>
@@ -180,41 +176,36 @@ export function DetailPanel({
 }
 
 // ---------------------------------------------------------------------------
-// Vue PROJET — carrousel photo, onglets (Aperçu / Unités / À savoir) qui
-// n'apparaissent que si le contenu le justifie.
+// Vue PROJET
 // ---------------------------------------------------------------------------
 
-type ProjectTab = "apercu" | "unites" | "savoir";
+type ProjectTab = "apercu" | "prix" | "promoteur";
 
 function ProjectView({
   project,
   promoter,
-  headerCollapsed,
-  onOpenPromoter
+  tab,
+  setTab,
+  showTabBar,
+  onOpenProject
 }: {
   project: Project;
   promoter: Promoter;
-  headerCollapsed: boolean;
-  onOpenPromoter: () => void;
+  tab: ProjectTab;
+  setTab: (t: ProjectTab) => void;
+  showTabBar: boolean;
+  onOpenProject: (id: string) => void;
 }) {
-  const hasUnites = !!project.pricing?.by_unit?.length;
-  const hasSavoir = !!project.public_information?.length || project.sources.length > 0;
-  // Onglet unique = pas la peine d'un menu à onglets, tout défile d'affilée
-  // (comme une fiche Google Maps simple sans avis ni photos).
-  const tabs: ProjectTab[] = ["apercu", ...(hasUnites ? (["unites"] as const) : []), ...(hasSavoir ? (["savoir"] as const) : [])];
-  const [tab, setTab] = useState<ProjectTab>("apercu");
-  const showTabBar = headerCollapsed && tabs.length > 1;
-
   const photos = [project.cover_image_url, ...(project.gallery ?? [])].filter(Boolean) as string[];
   const priceLabel = project.pricing?.summary ? formatPrice(project.pricing.summary) : null;
 
   return (
     <div>
       {photos.length > 0 && (
-        <div className="-mx-6 mb-4 flex snap-x snap-mandatory gap-0 overflow-x-auto">
+        <div className="-mx-6 mb-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-6">
           {photos.map((src, i) => (
-            <div key={i} className="relative aspect-[16/10] w-full shrink-0 snap-center bg-neutral-200 dark:bg-neutral-800">
-              <Image src={src} alt={`${project.name} — photo ${i + 1}`} fill sizes="420px" className="object-cover" />
+            <div key={i} className="relative aspect-[4/3] w-[80%] shrink-0 snap-center overflow-hidden rounded-2xl bg-neutral-200 dark:bg-neutral-800">
+              <Image src={src} alt={`${project.name} — photo ${i + 1}`} fill sizes="380px" className="object-cover" />
             </div>
           ))}
         </div>
@@ -228,25 +219,15 @@ function ProjectView({
           <span className="text-neutral-400">· localisation approximative</span>
         )}
       </p>
-      <button
-        type="button"
-        onClick={onOpenPromoter}
-        className="mt-1.5 flex items-center gap-1 text-sm font-medium text-teal-700 hover:underline dark:text-teal-400"
-      >
-        {promoter.name}
-        <ChevronRight className="h-3.5 w-3.5" aria-hidden />
-      </button>
       {project.status && (
-        <span className="mt-3 inline-flex items-center rounded-full bg-black/5 px-3 py-1 text-xs font-medium text-neutral-600 dark:bg-white/10 dark:text-neutral-300">
+        <span className={cn("mt-2 text-sm font-medium", PHASE_TAG_COLOR[project.status.phase])}>
           {PROJECT_PHASE_LABELS[project.status.phase]}
         </span>
       )}
 
-      {/* Menu à onglets — sticky, n'apparaît qu'au scroll en plein écran,
-          avec la ligne d'accent sous l'onglet actif (comme Google Maps). */}
       {showTabBar && (
         <div className="sticky -top-px z-10 -mx-6 mt-4 flex gap-5 border-b border-black/10 bg-white/95 px-6 backdrop-blur dark:border-white/10 dark:bg-neutral-900/95">
-          {tabs.map((t) => (
+          {(["apercu", "prix", "promoteur"] as const).map((t) => (
             <button
               key={t}
               type="button"
@@ -254,7 +235,7 @@ function ProjectView({
               className={cn(
                 "-mb-px border-b-2 py-2.5 text-sm font-medium transition-colors",
                 tab === t
-                  ? "border-teal-600 text-neutral-900 dark:text-white"
+                  ? "border-primary text-neutral-900 dark:text-white"
                   : "border-transparent text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200"
               )}
             >
@@ -264,21 +245,10 @@ function ProjectView({
         </div>
       )}
 
-      {(tab === "apercu" || !showTabBar) && (
+      {tab === "apercu" && (
         <>
-          {(priceLabel || project.pricing?.by_unit?.length) && (
-            <Section>
-              <div className="flex flex-wrap gap-x-6 gap-y-3">
-                {priceLabel && <Stat label="Prix" value={priceLabel} />}
-                {project.pricing?.by_unit?.length && (
-                  <Stat label="Typologies" value={`${project.pricing.by_unit.length}`} />
-                )}
-              </div>
-            </Section>
-          )}
-
           {project.characteristics && project.characteristics.length > 0 && (
-            <Section title="Caractéristiques">
+            <Section title="Caractéristiques" icon={<Target className="h-4 w-4" />}>
               <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5">
                 {project.characteristics.map((c) => (
                   <div key={c.label}>
@@ -290,12 +260,8 @@ function ProjectView({
             </Section>
           )}
 
-          <Section title="Promoteur">
-            <PromoterPreviewCard promoter={promoter} onClick={onOpenPromoter} />
-          </Section>
-
           {project.timeline && project.timeline.length > 0 && (
-            <Section title="Historique">
+            <Section title="Historique" icon={<Info className="h-4 w-4" />}>
               <ol className="space-y-3">
                 {project.timeline.map((entry, i) => (
                   <li key={i} className="flex gap-3">
@@ -307,30 +273,36 @@ function ProjectView({
             </Section>
           )}
 
-          {!hasUnites && !hasSavoir && null}
-        </>
-      )}
-
-      {tab === "unites" && showTabBar && project.pricing?.by_unit && (
-        <Section>
-          <UnitsList units={project.pricing.by_unit} />
-        </Section>
-      )}
-      {tab === "apercu" && !showTabBar && hasUnites && project.pricing?.by_unit && (
-        <Section title="Unités">
-          <UnitsList units={project.pricing.by_unit} />
-        </Section>
-      )}
-
-      {(tab === "savoir" || !showTabBar) && (
-        <>
           {project.public_information && project.public_information.length > 0 && (
-            <Section title="À savoir">
+            <Section title="À savoir" icon={<Info className="h-4 w-4" />}>
               <PublicInfoList items={project.public_information} />
             </Section>
           )}
+
           <SourcesSection sources={project.sources} />
         </>
+      )}
+
+      {tab === "prix" && (
+        <>
+          {(priceLabel || project.pricing?.by_unit?.length) && (
+            <Section title="Prix" icon={<Target className="h-4 w-4" />}>
+              {priceLabel && (
+                <p className="text-2xl font-semibold">{priceLabel}</p>
+              )}
+              {project.pricing?.by_unit && project.pricing.by_unit.length > 0 && (
+                <div className="mt-4">
+                  <p className="mb-2 text-xs font-medium text-neutral-500">Unités</p>
+                  <UnitsList units={project.pricing.by_unit} />
+                </div>
+              )}
+            </Section>
+          )}
+        </>
+      )}
+
+      {tab === "promoteur" && (
+        <PromoterInline promoter={promoter} onOpenProject={onOpenProject} />
       )}
     </div>
   );
@@ -338,89 +310,20 @@ function ProjectView({
 
 const TAB_LABELS: Record<ProjectTab, string> = {
   apercu: "Aperçu",
-  unites: "Unités",
-  savoir: "À savoir"
+  prix: "Prix",
+  promoteur: "Promoteur"
 };
 
-function UnitsList({ units: unitList }: { units: NonNullable<Project["pricing"]>["by_unit"] }) {
-  return (
-    <ul className="divide-y divide-black/5 dark:divide-white/5">
-      {(unitList ?? []).map((unit, i) => (
-        <li key={i} className="flex items-center justify-between gap-3 py-2.5 text-sm">
-          <div>
-            <p className="font-medium">{unit.typology}</p>
-            <p className="text-xs text-neutral-500">
-              {[
-                unit.surface_sqm ? `${unit.surface_sqm} m²` : null,
-                unit.bedrooms ? `${unit.bedrooms} ch.` : null,
-                unit.bathrooms ? `${unit.bathrooms} sdb` : null
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            </p>
-          </div>
-          {unit.price && <p className="shrink-0 text-sm font-medium">{formatPrice(unit.price)}</p>}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function PublicInfoList({ items }: { items: { title: string; description: string }[] }) {
-  return (
-    <ul className="space-y-3">
-      {items.map((item, i) => (
-        <li key={i} className="flex gap-2.5 rounded-2xl bg-black/5 px-3 py-2.5 dark:bg-white/5">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-neutral-500" aria-hidden />
-          <div>
-            <p className="text-sm font-medium">{item.title}</p>
-            <p className="mt-0.5 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
-              {item.description}
-            </p>
-          </div>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function PromoterPreviewCard({ promoter, onClick }: { promoter: Promoter; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left hover:bg-black/5 dark:hover:bg-white/10"
-    >
-      {promoter.photo_url ? (
-        <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
-          <Image src={promoter.photo_url} alt={promoter.name} fill sizes="40px" className="object-cover" />
-        </div>
-      ) : (
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black/5 dark:bg-white/10">
-          <Building2 className="h-4 w-4 text-neutral-500" aria-hidden />
-        </div>
-      )}
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">{promoter.name}</p>
-        <p className="text-xs text-neutral-500">
-          {promoter.projects.length > 1 ? `${promoter.projects.length} projets identifiés` : "1 projet identifié"}
-        </p>
-      </div>
-      <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400" aria-hidden />
-    </button>
-  );
-}
-
 // ---------------------------------------------------------------------------
-// Vue PROMOTEUR
+// Vue Promoteur INLINE (dans l'onglet du projet)
 // ---------------------------------------------------------------------------
 
-function PromoterView({
+function PromoterInline({
   promoter,
   onOpenProject
 }: {
   promoter: Promoter;
-  onOpenProject: (projectId: string) => void;
+  onOpenProject: (id: string) => void;
 }) {
   return (
     <div>
@@ -461,12 +364,12 @@ function PromoterView({
       )}
 
       {promoter.public_information && promoter.public_information.length > 0 && (
-        <Section title="À savoir">
+        <Section title="À savoir" icon={<Info className="h-4 w-4" />}>
           <PublicInfoList items={promoter.public_information} />
         </Section>
       )}
 
-      <Section title={promoter.projects.length > 1 ? "Ses projets" : "Son projet"}>
+      <Section title={promoter.projects.length > 1 ? "Ses projets" : "Son projet"} icon={<MapPin className="h-4 w-4" />}>
         <ul className="divide-y divide-black/5 dark:divide-white/5">
           {promoter.projects.map((project) => (
             <li key={project.id}>
@@ -503,24 +406,76 @@ function PromoterView({
 }
 
 // ---------------------------------------------------------------------------
+// Vue PROMOTEUR standalone (quand on sélectionne un promoteur via recherche)
+// ---------------------------------------------------------------------------
+
+function PromoterView({
+  promoter,
+  onOpenProject
+}: {
+  promoter: Promoter;
+  onOpenProject: (projectId: string) => void;
+}) {
+  return <PromoterInline promoter={promoter} onOpenProject={onOpenProject} />;
+}
+
+// ---------------------------------------------------------------------------
 // Composants partagés
 // ---------------------------------------------------------------------------
 
-function Section({ title, children }: { title?: string; children: React.ReactNode }) {
+function Section({ title, icon, children }: { title?: string; icon?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="mt-5 border-t border-black/5 pt-5 first:mt-4 first:border-none first:pt-0 dark:border-white/5">
-      {title && <h3 className="mb-2.5 text-sm font-semibold">{title}</h3>}
+      {title && (
+        <h3 className="mb-2.5 flex items-center gap-1.5 text-sm font-semibold text-teal-700 dark:text-teal-500">
+          {icon}
+          {title}
+        </h3>
+      )}
       {children}
     </div>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function UnitsList({ units: unitList }: { units: NonNullable<Project["pricing"]>["by_unit"] }) {
   return (
-    <div>
-      <p className="text-xs text-neutral-500">{label}</p>
-      <p className="text-base font-semibold">{value}</p>
-    </div>
+    <ul className="divide-y divide-black/5 dark:divide-white/5">
+      {(unitList ?? []).map((unit, i) => (
+        <li key={i} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+          <div>
+            <p className="font-medium">{unit.typology}</p>
+            <p className="text-xs text-neutral-500">
+              {[
+                unit.surface_sqm ? `${unit.surface_sqm} m²` : null,
+                unit.bedrooms ? `${unit.bedrooms} ch.` : null,
+                unit.bathrooms ? `${unit.bathrooms} sdb` : null
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          </div>
+          {unit.price && <p className="shrink-0 text-sm font-medium">{formatPrice(unit.price)}</p>}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function PublicInfoList({ items }: { items: { title: string; description: string }[] }) {
+  return (
+    <ul className="space-y-3">
+      {items.map((item, i) => (
+        <li key={i} className="flex gap-2.5 rounded-2xl bg-black/5 px-3 py-2.5 dark:bg-white/5">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-neutral-500" aria-hidden />
+          <div>
+            <p className="text-sm font-medium">{item.title}</p>
+            <p className="mt-0.5 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+              {item.description}
+            </p>
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }
 

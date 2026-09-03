@@ -19,6 +19,11 @@ const config: Config = {
         ]
       },
       colors: {
+        primary: {
+          DEFAULT: "#0d9488",
+          dark: "#0f766e",
+          light: "#14b8a6"
+        },
         status: {
           agree: "#34d399",
           rumeur: "#fbbf24",

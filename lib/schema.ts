@@ -172,6 +172,7 @@ export const ProjectPhaseSchema = z.enum([
   "suspendu",
   "inconnu"
 ]);
+export type ProjectPhase = z.infer<typeof ProjectPhaseSchema>;
 
 export const ProjectStatusSchema = z.object({
   phase: ProjectPhaseSchema,

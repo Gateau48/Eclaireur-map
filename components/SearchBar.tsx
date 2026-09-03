@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ArrowUpRight, MapPin, Search, User } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, CircleX, MapPin, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SearchApiResult } from "@/app/api/search/[edition]/route";
 
@@ -81,21 +81,26 @@ export function SearchBar({ editionId, onSelect, hidden }: SearchBarProps) {
         )}
       >
         <label className="relative flex items-center gap-2 px-4 py-2.5">
-          <Search className="h-4 w-4 shrink-0 text-neutral-500" aria-hidden />
+          <MapPin className="h-4 w-4 shrink-0 text-neutral-500" aria-hidden />
           <input
             ref={inputRef}
             type="text"
             value={rawQuery}
             onChange={(e) => setRawQuery(e.target.value)}
             onFocus={() => setIsFocused(true)}
-            placeholder="Chercher un promoteur ou un projet"
-            // GARDE-FOU : border-0 + outline-none + bg-transparent explicites
-            // sur l'input lui-même — certains navigateurs posent un contour
-            // par défaut sur <input> qui restait visible en permanence,
-            // indépendamment du focus. L'indication de focus vit uniquement
-            // sur le conteneur (focus-within:shadow-lg ci-dessus).
+            placeholder="Rechercher ici"
             className="w-full border-0 bg-transparent text-sm text-neutral-900 outline-none placeholder:text-neutral-500 dark:text-white"
           />
+          {rawQuery && (
+            <button
+              type="button"
+              onClick={() => { setRawQuery(""); setResults([]); }}
+              aria-label="Effacer"
+              className="shrink-0 rounded-full p-0.5 hover:bg-black/5 dark:hover:bg-white/10"
+            >
+              <CircleX className="h-4 w-4 text-neutral-400" />
+            </button>
+          )}
         </label>
 
         {hasDropdown && (
@@ -127,7 +132,7 @@ export function SearchBar({ editionId, onSelect, hidden }: SearchBarProps) {
               type="text"
               value={rawQuery}
               onChange={(e) => setRawQuery(e.target.value)}
-              placeholder="Chercher un promoteur ou un projet"
+              placeholder="Rechercher ici"
               className="w-full border-0 bg-transparent text-base text-neutral-900 outline-none placeholder:text-neutral-500 dark:text-white"
             />
           </div>

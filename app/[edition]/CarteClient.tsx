@@ -6,7 +6,6 @@ import {
   MapControls,
   MapMarker,
   MarkerContent,
-  MarkerLabel,
   MarkerTooltip,
   useMap
 } from "@/components/ui/map";
@@ -14,7 +13,8 @@ import { SearchBar } from "@/components/SearchBar";
 import type { SearchApiResult } from "@/app/api/search/[edition]/route";
 import { DetailPanel, PANEL_SNAP_POINTS } from "@/components/DetailPanel";
 import { clusterItems, type Clusterable } from "@/lib/clustering";
-import { findProjectAndPromoter, findPromoterById, type PanelView } from "@/lib/panel-view";
+import { findProjectAndPromoter, type PanelView } from "@/lib/panel-view";
+import { PHASE_MARKER_COLOR } from "@/lib/status";
 import type { EditionData, Project } from "@/lib/schema";
 import { cn } from "@/lib/utils";
 
@@ -65,12 +65,6 @@ export function CarteClient({ edition }: { edition: EditionData }) {
     setSnap(PANEL_SNAP_POINTS[1]);
   }
 
-  function openPromoter(promoterId: string) {
-    const promoter = findPromoterById(edition, promoterId);
-    if (!promoter) return;
-    setStack((s) => [...s, { type: "promoter", promoter }]);
-  }
-
   function goBack() {
     setStack((s) => s.slice(0, -1));
   }
@@ -79,7 +73,7 @@ export function CarteClient({ edition }: { edition: EditionData }) {
     if (result.kind === "project" && result.projectId) {
       openProject(result.projectId);
     } else {
-      openPromoter(result.promoterId);
+      openProject(result.promoterId);
     }
   }
 
@@ -105,7 +99,6 @@ export function CarteClient({ edition }: { edition: EditionData }) {
         onClose={() => setStack([])}
         onBack={goBack}
         onOpenProject={(id) => openProject(id, true)}
-        onOpenPromoter={openPromoter}
       />
     </div>
   );
@@ -171,6 +164,9 @@ function MarkerLayer({ points, onSelect }: { points: MarkerPoint[]; onSelect: (p
 }
 
 function SingleMarker({ point, onSelect }: { point: MarkerPoint; onSelect: (projectId: string) => void }) {
+  const phase = point.project.status?.phase ?? "inconnu";
+  const colorClass = PHASE_MARKER_COLOR[phase];
+
   return (
     <MapMarker longitude={point.coordinates.lng} latitude={point.coordinates.lat}>
       <MarkerContent>
@@ -180,14 +176,14 @@ function SingleMarker({ point, onSelect }: { point: MarkerPoint; onSelect: (proj
             onClick={() => onSelect(point.id)}
             aria-label={point.project.name}
             className={cn(
-              "flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 border-white bg-teal-600 shadow-md",
-              "transition-transform hover:scale-125"
+              "flex h-3 w-3 items-center justify-center rounded-full shadow-sm",
+              "transition-transform hover:scale-125",
+              colorClass
             )}
           />
           <MarkerTooltip>{point.project.name}</MarkerTooltip>
         </div>
       </MarkerContent>
-      <MarkerLabel position="bottom">{point.project.name}</MarkerLabel>
     </MapMarker>
   );
 }

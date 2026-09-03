@@ -235,17 +235,7 @@ export function MarkerLabel({
   children: ReactNode;
   position?: "bottom" | "top";
 }) {
-  return (
-    <div
-      className={cn(
-        "glass pointer-events-none absolute left-1/2 -translate-x-1/2 whitespace-nowrap",
-        "rounded-full px-2 py-0.5 text-[11px] font-medium",
-        position === "bottom" ? "top-full mt-1" : "bottom-full mb-1"
-      )}
-    >
-      {children}
-    </div>
-  );
+  return null;
 }
 
 /** Non utilisé pour le détail (voir Partie 2.1 du brief) — fourni pour
