@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { Sheet } from "react-modal-sheet";
+import { Drawer } from "vaul";
 import {
   ArrowUpRight,
   Building2,
@@ -52,8 +52,6 @@ function useIsDesktop() {
   return isDesktop;
 }
 
-const MOBILE_SHEET_SNAPS = [96, 0.5, 0.92] as const;
-
 export function DetailPanel({
   view,
   canGoBack,
@@ -64,6 +62,7 @@ export function DetailPanel({
   onOpenProject
 }: DetailPanelProps) {
   const isDesktop = useIsDesktop();
+  const isPeek = snap === PANEL_SNAP_POINTS[0];
   const scrollRef = useRef<HTMLDivElement>(null);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [tab, setTab] = useState<"apercu" | "prix" | "promoteur" | "photos">("apercu");
@@ -98,100 +97,97 @@ export function DetailPanel({
 
   const title = view?.type === "project" ? view.project.name : view?.promoter.name ?? "";
 
-  const handleSheetSnap = useCallback((index: number) => {
-    onSnapChange(MOBILE_SHEET_SNAPS[index]);
-  }, [onSnapChange]);
-
-  const sheetContent = view ? (
-    <div className="flex h-full flex-col">
-      {/* Header: titre tronqué + X — visible seulement quand le titre défile */}
-      <div className={cn(
-        "flex items-center gap-2 px-4 pb-2 pt-3",
-        !headerCollapsed && "invisible h-0 overflow-hidden pt-0 pb-0"
-      )}>
-        {canGoBack && (
-          <button
-            type="button"
-            onClick={onBack}
-            aria-label="Retour"
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-neutral-100"
-          >
-            <ChevronLeft className="h-4 w-4" aria-hidden />
-          </button>
-        )}
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-sm font-semibold">{title}</h1>
-        </div>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Fermer le panneau"
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-neutral-100"
-        >
-          <X className="h-4 w-4" aria-hidden />
-        </button>
-      </div>
-
-      {/* Contenu scrollable */}
-      <div
-        ref={scrollRef}
-        onScroll={handleContentScroll}
-        className="flex-1 overflow-y-auto scroll-hidden"
-      >
-        {view.type === "project" ? (
-          <ProjectView
-            project={view.project}
-            promoter={view.promoter}
-            tab={tab}
-            setTab={setTab}
-            onOpenProject={onOpenProject}
-            onPhotoClick={(src, alt, index, all) =>
-              setLightboxPhoto({ src, alt, index, all })
-            }
-          />
-        ) : (
-          <PromoterView
-            promoter={view.promoter}
-            onOpenProject={onOpenProject}
-            onPhotoClick={(src, alt, index, all) =>
-              setLightboxPhoto({ src, alt, index, all })
-            }
-          />
-        )}
-      </div>
-    </div>
-  ) : null;
-
   return (
-    <>
-      {/* Mobile : react-modal-sheet avec spring physics */}
-      {!isDesktop && (
-        <Sheet
-          isOpen={!!view}
-          onClose={onClose}
-          snapPoints={[96, 0.5, 0.92]}
-          initialSnap={1}
-          onSnap={handleSheetSnap}
-          disableDismiss
+    <Drawer.Root
+      open={!!view}
+      onOpenChange={(open) => !open && onClose()}
+      direction={isDesktop ? "right" : "bottom"}
+      snapPoints={isDesktop ? undefined : [...PANEL_SNAP_POINTS]}
+      activeSnapPoint={snap}
+      setActiveSnapPoint={onSnapChange}
+      dismissible={false}
+      modal={false}
+    >
+      <Drawer.Portal>
+        <Drawer.Content
+          className={cn(
+            "fixed z-20 flex flex-col outline-none bg-white",
+            "inset-x-0 bottom-0 rounded-t-3xl shadow-[0_-2px_20px_rgba(0,0,0,0.08)]",
+            "md:inset-y-0 md:bottom-0 md:right-0 md:left-auto md:h-full md:w-[480px] md:rounded-none md:border-l md:border-neutral-200"
+          )}
+          style={{ height: "min(92dvh, 92vh)" }}
         >
-          <Sheet.Container>
-            <Sheet.Header>
-              <Sheet.DragIndicator />
-            </Sheet.Header>
-            <Sheet.Content disableScroll={false}>
-              {sheetContent}
-            </Sheet.Content>
-          </Sheet.Container>
-          <Sheet.Backdrop />
-        </Sheet>
-      )}
+          <Drawer.Handle className="mx-auto mt-2 h-1 w-9 shrink-0 rounded-full bg-neutral-300 md:hidden" />
 
-      {/* Desktop : panneau fixe à droite */}
-      {isDesktop && view && (
-        <div className="fixed inset-y-0 right-0 z-20 flex w-[480px] flex-col border-l border-neutral-200 bg-white shadow-lg">
-          {sheetContent}
-        </div>
-      )}
+          {/* Barre sticky : titre tronqué + X — visible seulement quand le titre défile */}
+          <div className={cn(
+            "flex items-center gap-2 px-4 pb-2 pt-3",
+            !isPeek && !headerCollapsed && "invisible h-0 overflow-hidden pt-0 pb-0"
+          )}>
+            {canGoBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                aria-label="Retour"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-neutral-100"
+              >
+                <ChevronLeft className="h-4 w-4" aria-hidden />
+              </button>
+            )}
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-sm font-semibold">
+                {title}
+              </h1>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Fermer le panneau"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-neutral-100"
+            >
+              <X className="h-4 w-4" aria-hidden />
+            </button>
+          </div>
+
+          {/* Contenu scrollable — UN SEUL container pour tout */}
+          {!isPeek && view?.type === "project" && (
+            <div
+              ref={scrollRef}
+              onScroll={handleContentScroll}
+              className="flex-1 overflow-y-auto scroll-hidden"
+              style={{ touchAction: "pan-y", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+            >
+              <ProjectView
+                project={view.project}
+                promoter={view.promoter}
+                tab={tab}
+                setTab={setTab}
+                onOpenProject={onOpenProject}
+                onPhotoClick={(src, alt, index, all) =>
+                  setLightboxPhoto({ src, alt, index, all })
+                }
+              />
+            </div>
+          )}
+
+          {!isPeek && view?.type === "promoter" && (
+            <div
+              ref={scrollRef}
+              onScroll={handleContentScroll}
+              className="flex-1 overflow-y-auto scroll-hidden"
+              style={{ touchAction: "pan-y", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+            >
+              <PromoterView
+                promoter={view.promoter}
+                onOpenProject={onOpenProject}
+                onPhotoClick={(src, alt, index, all) =>
+                  setLightboxPhoto({ src, alt, index, all })
+                }
+              />
+            </div>
+          )}
+        </Drawer.Content>
+      </Drawer.Portal>
 
       {/* Lightbox */}
       {lightboxPhoto && (
@@ -207,7 +203,7 @@ export function DetailPanel({
           }}
         />
       )}
-    </>
+    </Drawer.Root>
   );
 }
 
@@ -258,7 +254,7 @@ function PhotoLightbox({
 
   return (
     <div
-      className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
       onClick={onClose}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
