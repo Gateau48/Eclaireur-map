@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Map,
   MapMarker,
@@ -17,6 +17,7 @@ import { clusterItems, type Clusterable } from "@/lib/clustering";
 import { findProjectAndPromoter, findPromoterById, type PanelView } from "@/lib/panel-view";
 import { PHASE_MARKER_COLOR } from "@/lib/status";
 import { PROJECT_PHASE_LABELS, type EditionData, type Project } from "@/lib/schema";
+import { searchEdition } from "@/lib/search";
 import { cn } from "@/lib/utils";
 
 interface MarkerPoint extends Clusterable {
@@ -70,6 +71,11 @@ export function CarteClient({ edition }: { edition: EditionData }) {
     setStack((s) => s.slice(0, -1));
   }
 
+  const handleSearch = useCallback(
+    (query: string) => searchEdition(edition, query),
+    [edition]
+  );
+
   function handleSelectSearchResult(result: SearchApiResult) {
     if (result.kind === "project" && result.projectId) {
       openProject(result.projectId);
@@ -97,7 +103,7 @@ export function CarteClient({ edition }: { edition: EditionData }) {
       />
 
       <SearchBar
-        editionId={edition.edition_id}
+        onSearch={handleSearch}
         onSelect={handleSelectSearchResult}
         hidden={snap === PANEL_SNAP_POINTS[1]}
         panelOpen={!!view}

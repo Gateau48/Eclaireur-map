@@ -6,15 +6,15 @@ import { cn } from "@/lib/utils";
 import type { SearchApiResult } from "@/app/api/search/[edition]/route";
 
 interface SearchBarProps {
-  editionId: string;
+  onSearch: (query: string) => SearchApiResult[];
   onSelect: (result: SearchApiResult) => void;
   hidden?: boolean;
   panelOpen?: boolean;
 }
 
-const DEBOUNCE_MS = 200;
+const DEBOUNCE_MS = 150;
 
-export function SearchBar({ editionId, onSelect, hidden, panelOpen }: SearchBarProps) {
+export function SearchBar({ onSearch, onSelect, hidden, panelOpen }: SearchBarProps) {
   const [rawQuery, setRawQuery] = useState("");
   const [results, setResults] = useState<SearchApiResult[]>([]);
   const [isFocused, setIsFocused] = useState(false);
@@ -29,18 +29,11 @@ export function SearchBar({ editionId, onSelect, hidden, panelOpen }: SearchBarP
     }
     const thisRequestId = ++requestIdRef.current;
     const t = setTimeout(() => {
-      fetch(`/api/search/${editionId}?q=${encodeURIComponent(query)}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (thisRequestId === requestIdRef.current)
-            setResults(data.results ?? []);
-        })
-        .catch(() => {
-          if (thisRequestId === requestIdRef.current) setResults([]);
-        });
+      if (thisRequestId === requestIdRef.current)
+        setResults(onSearch(query));
     }, DEBOUNCE_MS);
     return () => clearTimeout(t);
-  }, [rawQuery, editionId]);
+  }, [rawQuery, onSearch]);
 
   const hasDropdown =
     isFocused && (results.length > 0 || rawQuery.trim().length > 0);
