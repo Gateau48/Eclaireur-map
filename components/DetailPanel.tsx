@@ -27,7 +27,7 @@ import {
 import { PHASE_TAG_COLOR } from "@/lib/status";
 import type { PanelView } from "@/lib/panel-view";
 
-export const PANEL_SNAP_POINTS = ["96px", 0.5, 0.92] as const;
+export const PANEL_SNAP_POINTS = [0.5, 0.92] as const;
 export type PanelSnap = (typeof PANEL_SNAP_POINTS)[number];
 
 interface DetailPanelProps {
@@ -62,7 +62,6 @@ export function DetailPanel({
   onOpenProject
 }: DetailPanelProps) {
   const isDesktop = useIsDesktop();
-  const isPeek = snap === PANEL_SNAP_POINTS[0];
   const scrollRef = useRef<HTMLDivElement>(null);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [tab, setTab] = useState<"apercu" | "prix" | "promoteur" | "photos">("apercu");
@@ -120,7 +119,7 @@ export function DetailPanel({
           <Drawer.Handle className="mx-auto mt-2 h-1 w-9 shrink-0 rounded-full bg-neutral-300 md:hidden" />
 
           {/* Contenu scrollable — UN SEUL container pour tout */}
-          {!isPeek && view?.type === "project" && (
+          {view?.type === "project" && (
             <div
               ref={scrollRef}
               onScroll={handleContentScroll}
@@ -145,7 +144,7 @@ export function DetailPanel({
             </div>
           )}
 
-          {!isPeek && view?.type === "promoter" && (
+          {view?.type === "promoter" && (
             <div
               ref={scrollRef}
               onScroll={handleContentScroll}
