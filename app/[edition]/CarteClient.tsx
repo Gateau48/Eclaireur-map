@@ -185,7 +185,7 @@ const PHASE_TEXT_COLOR: Record<string, string> = {
   annonce: "text-sky-600",
   commercialisation: "text-emerald-600",
   en_construction: "text-amber-600",
-  livre: "text-neutral-600",
+  livre: "text-violet-600",
   suspendu: "text-red-600",
   inconnu: "text-neutral-400"
 };

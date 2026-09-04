@@ -220,7 +220,7 @@ export function MarkerLabel({
   return (
     <div
       className={cn(
-        "pointer-events-none whitespace-nowrap text-[11px] font-medium",
+        "pointer-events-none max-w-[120px] text-center text-[11px] font-medium leading-tight",
         position === "bottom" ? "mt-1" : "mb-1 order-first",
         className
       )}
