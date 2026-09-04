@@ -65,7 +65,7 @@ export function SearchBar({ editionId, onSelect, hidden, panelOpen }: SearchBarP
       <div
         className={cn(
           "absolute top-4 z-30 overflow-hidden bg-white shadow-lg",
-          "transition-[border-radius,box-shadow,left,right,transform] duration-300 ease-in-out",
+          "transition-[border-radius,box-shadow,left,right,width,max-width,transform] duration-300 ease-in-out",
           hasDropdown ? "rounded-3xl" : "rounded-full",
           "focus-within:shadow-xl",
           // Mobile: centered
