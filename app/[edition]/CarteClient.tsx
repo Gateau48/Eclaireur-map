@@ -26,7 +26,7 @@ interface MarkerPoint extends Clusterable {
 
 export function CarteClient({ edition }: { edition: EditionData }) {
   const [stack, setStack] = useState<PanelView[]>([]);
-  const [snap, setSnap] = useState<number | string | null>(PANEL_SNAP_POINTS[1]);
+  const [snap, setSnap] = useState<number | string | null>(PANEL_SNAP_POINTS[0]);
   const view = stack[stack.length - 1] ?? null;
 
   // La carte gère son propre déplacement via ses gestes — pas de scroll de
@@ -105,7 +105,7 @@ export function CarteClient({ edition }: { edition: EditionData }) {
       <SearchBar
         onSearch={handleSearch}
         onSelect={handleSelectSearchResult}
-        hidden={snap === PANEL_SNAP_POINTS[1]}
+        hidden={!!view && snap === PANEL_SNAP_POINTS[1]}
         panelOpen={!!view}
       />
 
