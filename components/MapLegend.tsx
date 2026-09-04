@@ -16,7 +16,7 @@ export function MapLegend({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "flex flex-wrap gap-x-3 gap-y-1 rounded-xl bg-white/90 px-3 py-2 shadow-sm backdrop-blur-sm",
+        "flex flex-col gap-y-1.5 rounded-xl bg-white/90 px-3 py-2 shadow-sm backdrop-blur-sm",
         className
       )}
     >

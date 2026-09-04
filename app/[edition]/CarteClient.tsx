@@ -91,11 +91,10 @@ export function CarteClient({ edition }: { edition: EditionData }) {
 
       <MapLegend
         className={cn(
-          "absolute bottom-6 z-10",
-          "left-1/2 -translate-x-1/2",
+          "absolute bottom-6 z-10 transition-all duration-300 ease-in-out",
           view
-            ? "md:left-4 md:translate-x-0 md:right-auto"
-            : "md:right-4 md:left-auto md:translate-x-0"
+            ? "left-4"
+            : "right-4"
         )}
       />
 
