@@ -77,7 +77,7 @@ export function DetailPanel({
 
   const handleContentScroll = useCallback(() => {
     if (!scrollRef.current) return;
-    setHeaderCollapsed(scrollRef.current.scrollTop > 24);
+    setHeaderCollapsed(scrollRef.current.scrollTop > 120);
   }, []);
 
   useEffect(() => {
@@ -96,11 +96,6 @@ export function DetailPanel({
   }, [view]);
 
   const title = view?.type === "project" ? view.project.name : view?.promoter.name ?? "";
-  const statusPhase = view?.type === "project" ? view.project.status?.phase : undefined;
-  const statusLabel = statusPhase ? PROJECT_PHASE_LABELS[statusPhase] : undefined;
-  const statusColor = statusPhase ? PHASE_TAG_COLOR[statusPhase] : undefined;
-
-  const titleTruncated = headerCollapsed || isPeek;
 
   return (
     <Drawer.Root
@@ -124,8 +119,11 @@ export function DetailPanel({
         >
           <Drawer.Handle className="mx-auto mt-2 h-1 w-9 shrink-0 rounded-full bg-neutral-300 md:hidden" />
 
-          {/* Barre sticky : titre + X — toujours visible */}
-          <div className="flex items-center gap-2 px-4 pb-2 pt-3">
+          {/* Barre sticky : titre tronqué + X — visible seulement quand le titre défile */}
+          <div className={cn(
+            "flex items-center gap-2 px-4 pb-2 pt-3",
+            !isPeek && !headerCollapsed && "invisible h-0 overflow-hidden pt-0 pb-0"
+          )}>
             {canGoBack && (
               <button
                 type="button"
@@ -137,19 +135,9 @@ export function DetailPanel({
               </button>
             )}
             <div className="min-w-0 flex-1">
-              <h1
-                className={cn(
-                  "truncate font-semibold transition-all duration-200",
-                  titleTruncated ? "text-sm" : "text-lg"
-                )}
-              >
+              <h1 className="truncate text-sm font-semibold">
                 {title}
               </h1>
-              {!titleTruncated && statusLabel && (
-                <p className={cn("text-sm font-medium", statusColor)}>
-                  {statusLabel}
-                </p>
-              )}
             </div>
             <button
               type="button"
@@ -161,7 +149,7 @@ export function DetailPanel({
             </button>
           </div>
 
-          {/* Contenu scrollable */}
+          {/* Contenu scrollable — UN SEUL container pour tout */}
           {!isPeek && view?.type === "project" && (
             <div
               ref={scrollRef}
@@ -351,9 +339,26 @@ function ProjectView({
 
   return (
     <div>
-      {/* Photos GRANDES — carousel horizontal, bien visibles */}
+      {/* Titre + statut — défile quand on scrolle */}
+      <div className="px-4 pb-3 pt-2">
+        <h2 className="text-xl font-semibold leading-tight">{project.name}</h2>
+        <p className="mt-1 flex items-center gap-1.5 text-sm text-neutral-500">
+          <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          {[project.location.district, project.location.city].filter(Boolean).join(", ")}
+          {project.location.precision !== "exact" && (
+            <span className="text-neutral-400">· localisation approximative</span>
+          )}
+        </p>
+        {project.status && (
+          <span className={cn("mt-2 text-sm font-medium", PHASE_TAG_COLOR[project.status.phase])}>
+            {PROJECT_PHASE_LABELS[project.status.phase]}
+          </span>
+        )}
+      </div>
+
+      {/* Photos GRANDES — carousel horizontal, défile quand on scrolle */}
       {photos.length > 0 && (
-        <div className="flex gap-3 overflow-x-auto scroll-hidden snap-x snap-mandatory px-4 pt-2 pb-4">
+        <div className="flex gap-3 overflow-x-auto scroll-hidden snap-x snap-mandatory px-4 pb-4">
           {photos.slice(0, 6).map((src, i) => (
             <button
               key={i}
@@ -373,46 +378,29 @@ function ProjectView({
         </div>
       )}
 
-      {/* Contenu sur fond lavande */}
+      {/* Onglets — sticky dans le scroll, reste visible quand on scrolle */}
+      <div className="sticky top-0 z-10 border-b border-neutral-200 bg-white px-4">
+        <div className="flex gap-5">
+          {(["apercu", "prix", "promoteur", "photos"] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTab(t)}
+              className={cn(
+                "-mb-px border-b-2 py-2.5 text-sm font-medium transition-colors",
+                tab === t
+                  ? "border-primary text-primary"
+                  : "border-transparent text-neutral-500 hover:text-neutral-800"
+              )}
+            >
+              {TAB_LABELS[t]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Contenu de l'onglet — fond lavande */}
       <div className="bg-[#f0f4ff] px-4 pb-8">
-        {/* Titre + statut */}
-        <div className="pb-3 pt-2">
-          <h2 className="text-xl font-semibold leading-tight">{project.name}</h2>
-          <p className="mt-1 flex items-center gap-1.5 text-sm text-neutral-500">
-            <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            {[project.location.district, project.location.city].filter(Boolean).join(", ")}
-            {project.location.precision !== "exact" && (
-              <span className="text-neutral-400">· localisation approximative</span>
-            )}
-          </p>
-          {project.status && (
-            <span className={cn("mt-2 text-sm font-medium", PHASE_TAG_COLOR[project.status.phase])}>
-              {PROJECT_PHASE_LABELS[project.status.phase]}
-            </span>
-          )}
-        </div>
-
-        {/* Onglets */}
-        <div className="sticky top-0 z-10 -mx-4 border-b border-neutral-200 bg-[#f0f4ff] px-4">
-          <div className="flex gap-5">
-            {(["apercu", "prix", "promoteur", "photos"] as const).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setTab(t)}
-                className={cn(
-                  "-mb-px border-b-2 py-2.5 text-sm font-medium transition-colors",
-                  tab === t
-                    ? "border-primary text-primary"
-                    : "border-transparent text-neutral-500 hover:text-neutral-800"
-                )}
-              >
-                {TAB_LABELS[t]}
-              </button>
-            ))}
-          </div>
-        </div>
-
         {tab === "apercu" && (
           <ApercuTab project={project} />
         )}
