@@ -75,7 +75,7 @@ export function SearchBar({ editionId, onSelect, hidden, panelOpen }: SearchBarP
             ? "md:left-auto md:right-[520px] md:translate-x-0 md:w-[calc(100%-540px)] md:max-w-lg"
             : "md:left-1/2 md:-translate-x-1/2",
           hidden &&
-            "pointer-events-none opacity-0 md:pointer-events-auto md:opacity-100",
+            "pointer-events-none opacity-0",
           isFocused && "hidden md:block"
         )}
       >

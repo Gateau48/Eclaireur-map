@@ -65,6 +65,8 @@ export function DetailPanel({
 }: DetailPanelProps) {
   const isDesktop = useIsDesktop();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [tab, setTab] = useState<"apercu" | "prix" | "promoteur" | "photos">("apercu");
   const [lightboxPhoto, setLightboxPhoto] = useState<{ src: string; alt: string; index: number; all: { src: string; alt: string }[] } | null>(null);
@@ -76,10 +78,21 @@ export function DetailPanel({
     scrollRef.current?.scrollTo({ top: 0 });
   }, [view]);
 
+  // Mesurer la hauteur de la zone titre+photos pour le seuil de collapse
+  useEffect(() => {
+    if (!headerRef.current || headerCollapsed) return;
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry) setHeaderHeight(entry.contentRect.height);
+    });
+    observer.observe(headerRef.current);
+    return () => observer.disconnect();
+  }, [view, headerCollapsed]);
+
   const handleContentScroll = useCallback(() => {
     if (!scrollRef.current) return;
-    setHeaderCollapsed(scrollRef.current.scrollTop > 120);
-  }, []);
+    const threshold = headerHeight > 0 ? headerHeight - 20 : 120;
+    setHeaderCollapsed(scrollRef.current.scrollTop >= threshold);
+  }, [headerHeight]);
 
   useEffect(() => {
     if (!view) return;
@@ -137,7 +150,7 @@ export function DetailPanel({
 
       {/* Titre complet + status + photos + tabs — visible à mi-hauteur, disparaît au scroll */}
       {!headerCollapsed && project && (
-        <div className="px-4 pb-3 pt-2">
+        <div ref={headerRef} className="px-4 pb-3 pt-2">
           <h2 className="text-xl font-semibold leading-tight">{project.name}</h2>
           <p className="mt-1 flex items-center gap-1.5 text-sm text-neutral-500">
             <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
@@ -183,9 +196,9 @@ export function DetailPanel({
         ) : null;
       })()}
 
-      {/* Tab bar — toujours visible, sticky en bas de la zone fixe */}
-      {project && (
-        <div className="sticky top-0 z-10 border-b border-neutral-200 bg-white px-4">
+      {/* Tab bar — visible seulement après avoir scrollé le titre et les photos */}
+      {headerCollapsed && project && (
+        <div className="z-10 border-b border-neutral-200 bg-white px-4">
           <div className="flex gap-5">
             {(["apercu", "prix", "promoteur", "photos"] as const).map((t) => (
               <button
@@ -348,7 +361,7 @@ function PhotoLightbox({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+      className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90"
       onClick={onClose}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}

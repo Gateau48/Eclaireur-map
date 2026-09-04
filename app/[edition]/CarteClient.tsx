@@ -94,7 +94,7 @@ export function CarteClient({ edition }: { edition: EditionData }) {
       <SearchBar
         editionId={edition.edition_id}
         onSelect={handleSelectSearchResult}
-        hidden={snap === PANEL_SNAP_POINTS[2]}
+        hidden={!!view}
         panelOpen={!!view}
       />
 
