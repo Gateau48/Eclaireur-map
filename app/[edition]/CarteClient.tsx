@@ -87,6 +87,7 @@ export function CarteClient({ edition }: { edition: EditionData }) {
       <Map center={defaultCenter} zoom={12}>
         <MarkerLayer points={markerPoints} onSelect={(id) => openProject(id)} />
         <MapSync view={view} snap={snap} />
+        <MapClickCloser onClose={() => setStack([])} isOpen={!!view} />
       </Map>
 
       <MapLegend className="absolute bottom-6 right-4 z-10" />
@@ -109,6 +110,26 @@ export function CarteClient({ edition }: { edition: EditionData }) {
       />
     </div>
   );
+}
+
+/** Ferme le panel quand on clique sur la carte (desktop uniquement) */
+function MapClickCloser({ onClose, isOpen }: { onClose: () => void; isOpen: boolean }) {
+  const { map } = useMap();
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    setIsDesktop(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  useEffect(() => {
+    if (!map || !isOpen || !isDesktop) return;
+    const handleClick = () => onClose();
+    map.on("click", handleClick);
+    return () => { map.off("click", handleClick); };
+  }, [map, isOpen, isDesktop, onClose]);
+  return null;
 }
 
 /** Recentre la carte sur le projet sélectionné (si coordonnées connues) et
