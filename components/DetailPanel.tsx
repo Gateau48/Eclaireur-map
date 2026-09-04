@@ -67,17 +67,27 @@ export function DetailPanel({
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [tab, setTab] = useState<"apercu" | "prix" | "promoteur" | "photos">("apercu");
   const [lightboxPhoto, setLightboxPhoto] = useState<{ src: string; alt: string; index: number; all: { src: string; alt: string }[] } | null>(null);
-  const [viewportBottomOffset, setViewportBottomOffset] = useState(0);
 
   useEffect(() => {
-    const onResize = () => {
-      const offset = window.innerHeight - (window.visualViewport?.height ?? window.innerHeight);
-      setViewportBottomOffset(Math.max(0, offset));
+    if (isDesktop) return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const syncDrawer = () => {
+      const drawer = document.querySelector<HTMLElement>("[data-vaul-drawer]");
+      if (!drawer) return;
+      drawer.style.top = `${vv.offsetTop}px`;
+      drawer.style.height = `${vv.height}px`;
     };
-    onResize();
-    window.visualViewport?.addEventListener("resize", onResize);
-    return () => window.visualViewport?.removeEventListener("resize", onResize);
-  }, []);
+
+    syncDrawer();
+    vv.addEventListener("resize", syncDrawer);
+    vv.addEventListener("scroll", syncDrawer);
+    return () => {
+      vv.removeEventListener("resize", syncDrawer);
+      vv.removeEventListener("scroll", syncDrawer);
+    };
+  }, [isDesktop]);
 
   useEffect(() => {
     setTab("apercu");
@@ -131,7 +141,6 @@ export function DetailPanel({
             "inset-x-0 bottom-0 rounded-t-3xl shadow-[0_-2px_20px_rgba(0,0,0,0.08)]",
             "md:inset-y-0 md:bottom-0 md:right-0 md:left-auto md:h-full md:w-[480px] md:rounded-none md:border-l md:border-neutral-200"
           )}
-          style={{ height: "min(92dvh, 92vh)" }}
         >
           <Drawer.Handle className="mx-auto mt-2 h-1 w-9 shrink-0 rounded-full bg-neutral-300 md:hidden" />
 
@@ -178,7 +187,7 @@ export function DetailPanel({
               ref={scrollRef}
               onScroll={handleContentScroll}
               className="flex-1 overflow-y-auto scroll-hidden"
-              style={{ touchAction: "pan-y", paddingBottom: viewportBottomOffset || undefined }}
+              style={{ touchAction: "pan-y" }}
             >
               <ProjectView
                 project={view.project}
@@ -198,7 +207,7 @@ export function DetailPanel({
               ref={scrollRef}
               onScroll={handleContentScroll}
               className="flex-1 overflow-y-auto scroll-hidden"
-              style={{ touchAction: "pan-y", paddingBottom: viewportBottomOffset || undefined }}
+              style={{ touchAction: "pan-y" }}
             >
               <PromoterView
                 promoter={view.promoter}

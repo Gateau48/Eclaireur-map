@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Map,
-  MapControls,
   MapMarker,
   MarkerContent,
   MarkerLabel,
@@ -87,10 +86,10 @@ export function CarteClient({ edition }: { edition: EditionData }) {
     <div className="absolute inset-0 h-full w-full">
       <Map center={defaultCenter} zoom={12}>
         <MarkerLayer points={markerPoints} onSelect={(id) => openProject(id)} />
-        <MapControls className="absolute bottom-6 right-4 z-10" />
-        <MapLegend className="absolute bottom-[120px] right-4 z-10 md:bottom-[88px]" />
         <MapSync view={view} snap={snap} />
       </Map>
+
+      <MapLegend className="absolute bottom-6 right-4 z-10" />
 
       <SearchBar
         editionId={edition.edition_id}
