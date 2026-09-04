@@ -96,15 +96,18 @@ export function DetailPanel({
     return () => observer.disconnect();
   }, [view]);
 
-  const title = view?.type === "project" ? view.project.name : view?.promoter.name ?? "";
-
   const handleSheetSnap = useCallback((index: number) => {
     onSnapChange(MOBILE_SHEET_SNAPS[index]);
   }, [onSnapChange]);
 
-  const sheetContent = view ? (
-    <div className="flex h-full flex-col">
-      {/* Header: titre tronqué + X — visible seulement quand le titre défile */}
+  const title = view?.type === "project" ? view.project.name : view?.promoter.name ?? "";
+  const project = view?.type === "project" ? view.project : undefined;
+  const promoter = view?.type === "project" ? view.promoter : view?.promoter;
+
+  // Zone fixe : titre + photos + tabs (visible à mi-hauteur)
+  const fixedHeader = view ? (
+    <div className="shrink-0">
+      {/* Titre tronqué + X — visible seulement quand le titre défile (scrollTop > 120) */}
       <div className={cn(
         "flex items-center gap-2 px-4 pb-2 pt-3",
         !headerCollapsed && "invisible h-0 overflow-hidden pt-0 pb-0"
@@ -132,24 +135,107 @@ export function DetailPanel({
         </button>
       </div>
 
-      {/* Contenu scrollable */}
-      <div
-        ref={scrollRef}
-        onScroll={handleContentScroll}
-        className="flex-1 overflow-y-auto scroll-hidden"
-      >
-        {view.type === "project" ? (
-          <ProjectView
-            project={view.project}
-            promoter={view.promoter}
-            tab={tab}
-            setTab={setTab}
-            onOpenProject={onOpenProject}
-            onPhotoClick={(src, alt, index, all) =>
-              setLightboxPhoto({ src, alt, index, all })
-            }
-          />
-        ) : (
+      {/* Titre complet + status + photos + tabs — visible à mi-hauteur, disparaît au scroll */}
+      {!headerCollapsed && project && (
+        <div className="px-4 pb-3 pt-2">
+          <h2 className="text-xl font-semibold leading-tight">{project.name}</h2>
+          <p className="mt-1 flex items-center gap-1.5 text-sm text-neutral-500">
+            <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            {[project.location.district, project.location.city].filter(Boolean).join(", ")}
+            {project.location.precision !== "exact" && (
+              <span className="text-neutral-400">· localisation approximative</span>
+            )}
+          </p>
+          {project.status && (
+            <span className={cn("mt-2 text-sm font-medium", PHASE_TAG_COLOR[project.status.phase])}>
+              {PROJECT_PHASE_LABELS[project.status.phase]}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Photos carousel — visible à mi-hauteur, disparaît au scroll */}
+      {!headerCollapsed && project && (() => {
+        const photos = [project.cover_image_url, ...(project.gallery ?? [])].filter(Boolean) as string[];
+        const allPhotoObjects = photos.map((src, i) => ({
+          src,
+          alt: `${project.name} — photo ${i + 1}`
+        }));
+        return photos.length > 0 ? (
+          <div className="flex gap-3 overflow-x-auto scroll-hidden snap-x snap-mandatory px-4 pb-4">
+            {photos.slice(0, 6).map((src, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setLightboxPhoto({ src, alt: `${project.name} — photo ${i + 1}`, index: i, all: allPhotoObjects })}
+                className="relative w-[75%] shrink-0 snap-center aspect-[4/3] overflow-hidden rounded-2xl bg-neutral-200"
+              >
+                <Image
+                  src={src}
+                  alt={`${project.name} — photo ${i + 1}`}
+                  fill
+                  sizes="300px"
+                  className="object-cover"
+                />
+              </button>
+            ))}
+          </div>
+        ) : null;
+      })()}
+
+      {/* Tab bar — toujours visible, sticky en bas de la zone fixe */}
+      {project && (
+        <div className="sticky top-0 z-10 border-b border-neutral-200 bg-white px-4">
+          <div className="flex gap-5">
+            {(["apercu", "prix", "promoteur", "photos"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTab(t)}
+                className={cn(
+                  "-mb-px border-b-2 py-2.5 text-sm font-medium transition-colors",
+                  tab === t
+                    ? "border-primary text-primary"
+                    : "border-transparent text-neutral-500 hover:text-neutral-800"
+                )}
+              >
+                {TAB_LABELS[t]}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  ) : null;
+
+  // Zone scrollable : contenu du tab uniquement
+  const scrollContent = view ? (
+    <div className="flex-1 overflow-y-auto scroll-hidden">
+      {view.type === "project" ? (
+        <div className="bg-[#f0f4ff] px-4 pb-8">
+          {tab === "apercu" && <ApercuTab project={view.project} />}
+          {tab === "prix" && <PrixTab project={view.project} />}
+          {tab === "promoteur" && (
+            <PromoterInline
+              promoter={view.promoter}
+              onOpenProject={onOpenProject}
+              onPhotoClick={(src, alt, index, all) =>
+                setLightboxPhoto({ src, alt, index, all })
+              }
+            />
+          )}
+          {tab === "photos" && (
+            <PhotosTab
+              project={view.project}
+              promoter={view.promoter}
+              onPhotoClick={(src, alt, index, all) =>
+                setLightboxPhoto({ src, alt, index, all })
+              }
+            />
+          )}
+        </div>
+      ) : (
+        <div className="px-4 pb-8 pt-2">
           <PromoterView
             promoter={view.promoter}
             onOpenProject={onOpenProject}
@@ -157,8 +243,8 @@ export function DetailPanel({
               setLightboxPhoto({ src, alt, index, all })
             }
           />
-        )}
-      </div>
+        </div>
+      )}
     </div>
   ) : null;
 
@@ -179,7 +265,10 @@ export function DetailPanel({
               <Sheet.DragIndicator />
             </Sheet.Header>
             <Sheet.Content disableScroll={false}>
-              {sheetContent}
+              <div ref={scrollRef} onScroll={handleContentScroll} className="flex h-full flex-col">
+                {fixedHeader}
+                {scrollContent}
+              </div>
             </Sheet.Content>
           </Sheet.Container>
           <Sheet.Backdrop />
@@ -189,7 +278,8 @@ export function DetailPanel({
       {/* Desktop : panneau fixe à droite */}
       {isDesktop && view && (
         <div className="fixed inset-y-0 right-0 z-20 flex w-[480px] flex-col border-l border-neutral-200 bg-white shadow-lg">
-          {sheetContent}
+          {fixedHeader}
+          {scrollContent}
         </div>
       )}
 
