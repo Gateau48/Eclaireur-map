@@ -69,27 +69,6 @@ export function DetailPanel({
   const [lightboxPhoto, setLightboxPhoto] = useState<{ src: string; alt: string; index: number; all: { src: string; alt: string }[] } | null>(null);
 
   useEffect(() => {
-    if (isDesktop) return;
-    const vv = window.visualViewport;
-    if (!vv) return;
-
-    const syncDrawer = () => {
-      const drawer = document.querySelector<HTMLElement>("[data-vaul-drawer]");
-      if (!drawer) return;
-      drawer.style.top = `${vv.offsetTop}px`;
-      drawer.style.height = `${vv.height}px`;
-    };
-
-    syncDrawer();
-    vv.addEventListener("resize", syncDrawer);
-    vv.addEventListener("scroll", syncDrawer);
-    return () => {
-      vv.removeEventListener("resize", syncDrawer);
-      vv.removeEventListener("scroll", syncDrawer);
-    };
-  }, [isDesktop]);
-
-  useEffect(() => {
     setTab("apercu");
     setHeaderCollapsed(false);
     setLightboxPhoto(null);
@@ -141,6 +120,7 @@ export function DetailPanel({
             "inset-x-0 bottom-0 rounded-t-3xl shadow-[0_-2px_20px_rgba(0,0,0,0.08)]",
             "md:inset-y-0 md:bottom-0 md:right-0 md:left-auto md:h-full md:w-[480px] md:rounded-none md:border-l md:border-neutral-200"
           )}
+          style={{ height: "min(92dvh, 92vh)" }}
         >
           <Drawer.Handle className="mx-auto mt-2 h-1 w-9 shrink-0 rounded-full bg-neutral-300 md:hidden" />
 
@@ -187,7 +167,7 @@ export function DetailPanel({
               ref={scrollRef}
               onScroll={handleContentScroll}
               className="flex-1 overflow-y-auto scroll-hidden"
-              style={{ touchAction: "pan-y" }}
+              style={{ touchAction: "pan-y", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
             >
               <ProjectView
                 project={view.project}
@@ -207,7 +187,7 @@ export function DetailPanel({
               ref={scrollRef}
               onScroll={handleContentScroll}
               className="flex-1 overflow-y-auto scroll-hidden"
-              style={{ touchAction: "pan-y" }}
+              style={{ touchAction: "pan-y", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
             >
               <PromoterView
                 promoter={view.promoter}
