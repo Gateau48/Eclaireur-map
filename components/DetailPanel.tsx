@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { Sheet, useScrollPosition } from "react-modal-sheet";
+import { Sheet } from "react-modal-sheet";
 import {
   ArrowUpRight,
   Building2,
@@ -64,48 +64,22 @@ export function DetailPanel({
   onOpenProject
 }: DetailPanelProps) {
   const isDesktop = useIsDesktop();
-  const scrollElRef = useRef<HTMLDivElement | null>(null);
-  const headerRef = useRef<HTMLDivElement>(null);
-  const [headerHeight, setHeaderHeight] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [tab, setTab] = useState<"apercu" | "prix" | "promoteur" | "photos">("apercu");
   const [lightboxPhoto, setLightboxPhoto] = useState<{ src: string; alt: string; index: number; all: { src: string; alt: string }[] } | null>(null);
-
-  // Library scroll tracking pour le handoff scroll→drag
-  const { scrollRef: libScrollRef, scrollPosition } = useScrollPosition({ isEnabled: !!view });
-
-  // Combiner le ref de la library avec notre ref local
-  const combinedScrollRef = useCallback(
-    (node: HTMLDivElement | null) => {
-      libScrollRef(node);
-      scrollElRef.current = node;
-    },
-    [libScrollRef]
-  );
 
   useEffect(() => {
     setTab("apercu");
     setHeaderCollapsed(false);
     setLightboxPhoto(null);
-    scrollElRef.current?.scrollTo({ top: 0 });
+    scrollRef.current?.scrollTo({ top: 0 });
   }, [view]);
 
-  // Mesurer la hauteur de la zone titre+photos pour le seuil de collapse
-  useEffect(() => {
-    if (!headerRef.current || headerCollapsed) return;
-    const observer = new ResizeObserver(([entry]) => {
-      if (entry) setHeaderHeight(entry.contentRect.height);
-    });
-    observer.observe(headerRef.current);
-    return () => observer.disconnect();
-  }, [view, headerCollapsed]);
-
-  const handleScroll = useCallback(() => {
-    const el = scrollElRef.current;
-    if (!el) return;
-    const threshold = headerHeight > 0 ? headerHeight - 20 : 120;
-    setHeaderCollapsed(el.scrollTop >= threshold);
-  }, [headerHeight]);
+  const handleContentScroll = useCallback(() => {
+    if (!scrollRef.current) return;
+    setHeaderCollapsed(scrollRef.current.scrollTop > 120);
+  }, []);
 
   useEffect(() => {
     if (!view) return;
@@ -122,165 +96,75 @@ export function DetailPanel({
     return () => observer.disconnect();
   }, [view]);
 
+  const title = view?.type === "project" ? view.project.name : view?.promoter.name ?? "";
+
   const handleSheetSnap = useCallback((index: number) => {
     onSnapChange(MOBILE_SHEET_SNAPS[index]);
   }, [onSnapChange]);
 
-  const title = view?.type === "project" ? view.project.name : view?.promoter.name ?? "";
-  const project = view?.type === "project" ? view.project : undefined;
-  const promoter = view?.type === "project" ? view.promoter : view?.promoter;
-
-  // Contenu unique du scroll — titre + photos + sticky header + tabs + contenu
-  const scrollBody = view ? (
+  const sheetContent = view ? (
     <div className="flex h-full flex-col">
-      <div
-        ref={combinedScrollRef}
-        onScroll={handleScroll}
-        className="flex-1 overflow-y-auto"
-      >
-        {/* Titre complet + status + photos — défile hors de vue naturellement */}
-        {project && (
-          <div ref={headerRef} className="px-4 pb-3 pt-2">
-            <h2 className="text-xl font-semibold leading-tight">{project.name}</h2>
-            <p className="mt-1 flex items-center gap-1.5 text-sm text-neutral-500">
-              <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              {[project.location.district, project.location.city].filter(Boolean).join(", ")}
-              {project.location.precision !== "exact" && (
-                <span className="text-neutral-400">· localisation approximative</span>
-              )}
-            </p>
-            {project.status && (
-              <span className={cn("mt-2 text-sm font-medium", PHASE_TAG_COLOR[project.status.phase])}>
-                {PROJECT_PHASE_LABELS[project.status.phase]}
-              </span>
-            )}
-          </div>
+      {/* Header: titre tronqué + X — visible seulement quand le titre défile */}
+      <div className={cn(
+        "flex items-center gap-2 px-4 pb-2 pt-3",
+        !headerCollapsed && "invisible h-0 overflow-hidden pt-0 pb-0"
+      )}>
+        {canGoBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="Retour"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-neutral-100"
+          >
+            <ChevronLeft className="h-4 w-4" aria-hidden />
+          </button>
         )}
-
-        {/* Photos carousel — défile hors de vue naturellement */}
-        {project && (() => {
-          const photos = [project.cover_image_url, ...(project.gallery ?? [])].filter(Boolean) as string[];
-          const allPhotoObjects = photos.map((src, i) => ({
-            src,
-            alt: `${project.name} — photo ${i + 1}`
-          }));
-          return photos.length > 0 ? (
-            <div className="flex gap-3 overflow-x-auto scroll-hidden snap-x snap-mandatory px-4 pb-4">
-              {photos.slice(0, 6).map((src, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setLightboxPhoto({ src, alt: `${project.name} — photo ${i + 1}`, index: i, all: allPhotoObjects })}
-                  className="relative w-[75%] shrink-0 snap-center aspect-[4/3] overflow-hidden rounded-2xl bg-neutral-200"
-                >
-                  <Image
-                    src={src}
-                    alt={`${project.name} — photo ${i + 1}`}
-                    fill
-                    sizes="300px"
-                    className="object-cover"
-                  />
-                </button>
-              ))}
-            </div>
-          ) : null;
-        })()}
-
-        {/* Header sticky : titre tronqué + X + onglets — reste en haut au scroll */}
-        <div className="sticky top-0 z-10 bg-white">
-          {/* Titre tronqué + X — visible quand le titre complet a défilé */}
-          {headerCollapsed && (
-            <div className="flex items-center gap-2 border-b border-neutral-200 px-4 py-2.5">
-              {canGoBack && (
-                <button
-                  type="button"
-                  onClick={onBack}
-                  aria-label="Retour"
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-neutral-100"
-                >
-                  <ChevronLeft className="h-4 w-4" aria-hidden />
-                </button>
-              )}
-              <div className="min-w-0 flex-1">
-                <h1 className="truncate text-sm font-semibold">{title}</h1>
-              </div>
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Fermer le panneau"
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-neutral-100"
-              >
-                <X className="h-4 w-4" aria-hidden />
-              </button>
-            </div>
-          )}
-
-          {/* Onglets — TOUJOURS visibles, sticky */}
-          {project && (
-            <div className="border-b border-neutral-200 px-4">
-              <div className="flex gap-5">
-                {(["apercu", "prix", "promoteur", "photos"] as const).map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setTab(t)}
-                    className={cn(
-                      "-mb-px border-b-2 py-2.5 text-sm font-medium transition-colors",
-                      tab === t
-                        ? "border-primary text-primary"
-                        : "border-transparent text-neutral-500 hover:text-neutral-800"
-                    )}
-                  >
-                    {TAB_LABELS[t]}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+        <div className="min-w-0 flex-1">
+          <h1 className="truncate text-sm font-semibold">{title}</h1>
         </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Fermer le panneau"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-neutral-100"
+        >
+          <X className="h-4 w-4" aria-hidden />
+        </button>
+      </div>
 
-        {/* Contenu de l'onglet */}
-        <div className="bg-[#f0f4ff] px-4 pb-8">
-          {view.type === "project" ? (
-            <>
-              {tab === "apercu" && <ApercuTab project={view.project} />}
-              {tab === "prix" && <PrixTab project={view.project} />}
-              {tab === "promoteur" && (
-                <PromoterInline
-                  promoter={view.promoter}
-                  onOpenProject={onOpenProject}
-                  onPhotoClick={(src, alt, index, all) =>
-                    setLightboxPhoto({ src, alt, index, all })
-                  }
-                />
-              )}
-              {tab === "photos" && (
-                <PhotosTab
-                  project={view.project}
-                  promoter={view.promoter}
-                  onPhotoClick={(src, alt, index, all) =>
-                    setLightboxPhoto({ src, alt, index, all })
-                  }
-                />
-              )}
-            </>
-          ) : (
-            <PromoterView
-              promoter={view.promoter}
-              onOpenProject={onOpenProject}
-              onPhotoClick={(src, alt, index, all) =>
-                setLightboxPhoto({ src, alt, index, all })
-              }
-            />
-          )}
-        </div>
+      {/* Contenu scrollable */}
+      <div
+        ref={scrollRef}
+        onScroll={handleContentScroll}
+        className="flex-1 overflow-y-auto scroll-hidden"
+      >
+        {view.type === "project" ? (
+          <ProjectView
+            project={view.project}
+            promoter={view.promoter}
+            tab={tab}
+            setTab={setTab}
+            onOpenProject={onOpenProject}
+            onPhotoClick={(src, alt, index, all) =>
+              setLightboxPhoto({ src, alt, index, all })
+            }
+          />
+        ) : (
+          <PromoterView
+            promoter={view.promoter}
+            onOpenProject={onOpenProject}
+            onPhotoClick={(src, alt, index, all) =>
+              setLightboxPhoto({ src, alt, index, all })
+            }
+          />
+        )}
       </div>
     </div>
   ) : null;
 
   return (
     <>
-      {/* Mobile : react-modal-sheet avec scroll/drag handoff correct */}
+      {/* Mobile : react-modal-sheet avec spring physics */}
       {!isDesktop && (
         <Sheet
           isOpen={!!view}
@@ -294,11 +178,8 @@ export function DetailPanel({
             <Sheet.Header>
               <Sheet.DragIndicator />
             </Sheet.Header>
-            <Sheet.Content
-              disableScroll
-              disableDrag={scrollPosition != null && scrollPosition !== "top"}
-            >
-              {scrollBody}
+            <Sheet.Content disableScroll={false}>
+              {sheetContent}
             </Sheet.Content>
           </Sheet.Container>
           <Sheet.Backdrop />
@@ -308,7 +189,7 @@ export function DetailPanel({
       {/* Desktop : panneau fixe à droite */}
       {isDesktop && view && (
         <div className="fixed inset-y-0 right-0 z-20 flex w-[480px] flex-col border-l border-neutral-200 bg-white shadow-lg">
-          {scrollBody}
+          {sheetContent}
         </div>
       )}
 
