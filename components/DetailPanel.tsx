@@ -119,36 +119,6 @@ export function DetailPanel({
         >
           <Drawer.Handle className="mx-auto mt-2 h-1 w-9 shrink-0 rounded-full bg-neutral-300 md:hidden" />
 
-          {/* Barre sticky : titre tronqué + X — visible seulement quand le titre défile */}
-          <div className={cn(
-            "flex items-center gap-2 px-4 pb-2 pt-3",
-            !isPeek && !headerCollapsed && "invisible h-0 overflow-hidden pt-0 pb-0"
-          )}>
-            {canGoBack && (
-              <button
-                type="button"
-                onClick={onBack}
-                aria-label="Retour"
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-neutral-100"
-              >
-                <ChevronLeft className="h-4 w-4" aria-hidden />
-              </button>
-            )}
-            <div className="min-w-0 flex-1">
-              <h1 className="truncate text-sm font-semibold">
-                {title}
-              </h1>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Fermer le panneau"
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-neutral-100"
-            >
-              <X className="h-4 w-4" aria-hidden />
-            </button>
-          </div>
-
           {/* Contenu scrollable — UN SEUL container pour tout */}
           {!isPeek && view?.type === "project" && (
             <div
@@ -163,6 +133,11 @@ export function DetailPanel({
                 tab={tab}
                 setTab={setTab}
                 onOpenProject={onOpenProject}
+                headerCollapsed={headerCollapsed}
+                title={title}
+                canGoBack={canGoBack}
+                onBack={onBack}
+                onClose={onClose}
                 onPhotoClick={(src, alt, index, all) =>
                   setLightboxPhoto({ src, alt, index, all })
                 }
@@ -180,6 +155,10 @@ export function DetailPanel({
               <PromoterView
                 promoter={view.promoter}
                 onOpenProject={onOpenProject}
+                title={title}
+                canGoBack={canGoBack}
+                onBack={onBack}
+                onClose={onClose}
                 onPhotoClick={(src, alt, index, all) =>
                   setLightboxPhoto({ src, alt, index, all })
                 }
@@ -320,6 +299,11 @@ function ProjectView({
   tab,
   setTab,
   onOpenProject,
+  headerCollapsed,
+  title,
+  canGoBack,
+  onBack,
+  onClose,
   onPhotoClick
 }: {
   project: Project;
@@ -327,6 +311,11 @@ function ProjectView({
   tab: ProjectTab;
   setTab: (t: ProjectTab) => void;
   onOpenProject: (id: string) => void;
+  headerCollapsed: boolean;
+  title: string;
+  canGoBack: boolean;
+  onBack: () => void;
+  onClose: () => void;
   onPhotoClick: (src: string, alt: string, index: number, all: { src: string; alt: string }[]) => void;
 }) {
   const photos = [project.cover_image_url, ...(project.gallery ?? [])].filter(Boolean) as string[];
@@ -339,21 +328,50 @@ function ProjectView({
 
   return (
     <div>
-      {/* Titre + statut — défile quand on scrolle */}
-      <div className="px-4 pb-3 pt-2">
-        <h2 className="text-xl font-semibold leading-tight">{project.name}</h2>
-        <p className="mt-1 flex items-center gap-1.5 text-sm text-neutral-500">
-          <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
-          {[project.location.district, project.location.city].filter(Boolean).join(", ")}
-          {project.location.precision !== "exact" && (
-            <span className="text-neutral-400">· localisation approximative</span>
-          )}
-        </p>
-        {project.status && (
-          <span className={cn("mt-2 text-sm font-medium", PHASE_TAG_COLOR[project.status.phase])}>
-            {PROJECT_PHASE_LABELS[project.status.phase]}
-          </span>
+      {/* Titre + X — TOUJOURS visible, troncature fluide au scroll */}
+      <div className="flex items-start gap-2 px-4 pb-3 pt-2">
+        {canGoBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="Retour"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-neutral-100 mt-0.5"
+          >
+            <ChevronLeft className="h-4 w-4" aria-hidden />
+          </button>
         )}
+        <div className="min-w-0 flex-1">
+          <h2 className={cn(
+            "font-semibold leading-tight transition-all",
+            headerCollapsed ? "truncate text-sm" : "text-xl"
+          )}>
+            {project.name}
+          </h2>
+          {!headerCollapsed && (
+            <>
+              <p className="mt-1 flex items-center gap-1.5 text-sm text-neutral-500">
+                <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                {[project.location.district, project.location.city].filter(Boolean).join(", ")}
+                {project.location.precision !== "exact" && (
+                  <span className="text-neutral-400">· localisation approximative</span>
+                )}
+              </p>
+              {project.status && (
+                <span className={cn("mt-2 text-sm font-medium", PHASE_TAG_COLOR[project.status.phase])}>
+                  {PROJECT_PHASE_LABELS[project.status.phase]}
+                </span>
+              )}
+            </>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Fermer le panneau"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-neutral-100 mt-0.5"
+        >
+          <X className="h-4 w-4" aria-hidden />
+        </button>
       </div>
 
       {/* Photos GRANDES — carousel horizontal, défile quand on scrolle */}
@@ -682,15 +700,49 @@ function PromoterInline({
 function PromoterView({
   promoter,
   onOpenProject,
+  title,
+  canGoBack,
+  onBack,
+  onClose,
   onPhotoClick
 }: {
   promoter: Promoter;
   onOpenProject: (projectId: string) => void;
+  title: string;
+  canGoBack: boolean;
+  onBack: () => void;
+  onClose: () => void;
   onPhotoClick: (src: string, alt: string, index: number, all: { src: string; alt: string }[]) => void;
 }) {
   return (
-    <div className="px-4 pb-8 pt-2">
-      <PromoterInline promoter={promoter} onOpenProject={onOpenProject} onPhotoClick={onPhotoClick} />
+    <div>
+      {/* Titre + X — TOUJOURS visible */}
+      <div className="flex items-start gap-2 px-4 pb-3 pt-2">
+        {canGoBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="Retour"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-neutral-100 mt-0.5"
+          >
+            <ChevronLeft className="h-4 w-4" aria-hidden />
+          </button>
+        )}
+        <div className="min-w-0 flex-1">
+          <h2 className="truncate text-sm font-semibold">{title}</h2>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Fermer le panneau"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-neutral-100 mt-0.5"
+        >
+          <X className="h-4 w-4" aria-hidden />
+        </button>
+      </div>
+      <div className="px-4 pb-8">
+        <PromoterInline promoter={promoter} onOpenProject={onOpenProject} onPhotoClick={onPhotoClick} />
+      </div>
     </div>
   );
 }
