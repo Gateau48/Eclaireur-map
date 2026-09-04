@@ -89,7 +89,15 @@ export function CarteClient({ edition }: { edition: EditionData }) {
         <MapSync view={view} snap={snap} />
       </Map>
 
-      <MapLegend className="absolute bottom-6 right-4 z-10" />
+      <MapLegend
+        className={cn(
+          "absolute bottom-6 z-10",
+          "left-1/2 -translate-x-1/2",
+          view
+            ? "md:left-4 md:translate-x-0 md:right-auto"
+            : "md:right-4 md:left-auto md:translate-x-0"
+        )}
+      />
 
       <SearchBar
         editionId={edition.edition_id}
