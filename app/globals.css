@@ -31,12 +31,17 @@
   }
 }
 
-/* Transitions fluides pour le panel — CSS custom properties animées par framer-motion */
+/* Panel : transitions smooth pour height, border-radius et opacity */
 [data-panel-root] {
+  transition: height 0.4s cubic-bezier(0.32, 0.72, 0, 1),
+              border-radius 0.4s cubic-bezier(0.32, 0.72, 0, 1);
   will-change: transform, height;
 }
 
-/* Suppression de l'ancien Vaul transition */
+[data-panel-root] [data-panel-scroll] {
+  transition: opacity 0.3s ease;
+  transition-delay: 0.15s;
+}
 
 /* Focus clavier visible partout, jamais supprimé.
    GARDE-FOU : `outline` ne suit pas border-radius (rendu en rectangle net

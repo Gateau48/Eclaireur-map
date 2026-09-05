@@ -61,6 +61,43 @@ export function PanelRoot({
   const scrollRef = useRef<HTMLDivElement>(null);
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
+  // Hauteur animée : commence à 0 quand le panel s'ouvre, puis anime vers targetHeight
+  const [animatedHeight, setAnimatedHeight] = useState(0);
+
+  // Forcer le départ à 0 quand le panel s'ouvre
+  useEffect(() => {
+    if (open) {
+      // Premier render : hauteur à 0 (pour que la CSS transition anime de 0 → target)
+      setAnimatedHeight(0);
+      // Après un frame, définir la hauteur cible (la CSS transition fera le reste)
+      const raf = requestAnimationFrame(() => {
+        setAnimatedHeight(targetHeight);
+      });
+      return () => cancelAnimationFrame(raf);
+    } else {
+      setAnimatedHeight(0);
+    }
+  }, [open]); // Pas de dependency sur targetHeight ici — on veut juste le départ à 0
+
+  // Mettre à jour la hauteur animée quand targetHeight change (snap change)
+  useEffect(() => {
+    if (open && animatedHeight > 0) {
+      setAnimatedHeight(targetHeight);
+    }
+  }, [targetHeight, open]);
+
+  // Content opacity : fade-in avec delay pour synchroniser avec le slide-up
+  const [contentVisible, setContentVisible] = useState(false);
+  useEffect(() => {
+    if (open) {
+      // Delay de 150ms pour laisser le slide commencer avant le fade-in
+      const timer = setTimeout(() => setContentVisible(true), 150);
+      return () => clearTimeout(timer);
+    } else {
+      setContentVisible(false);
+    }
+  }, [open]);
+
   // --- Focus trap ---
   useEffect(() => {
     if (!open || !blocking) return;
@@ -83,7 +120,6 @@ export function PanelRoot({
   // --- Handle drag end : trouver le snap le plus proche ---
   const handleDragEnd = useCallback(
     (_: unknown, info: PanInfo) => {
-      // Prédiction de landing basée sur la vélocité et l'offset
       const velocity = isDesktop ? info.velocity.x : info.velocity.y;
       const offset = isDesktop ? info.offset.x : info.offset.y;
 
@@ -101,7 +137,6 @@ export function PanelRoot({
       const predicted = targetHeight + velocity * 0.3 + offset * 0.1;
       const snapped = findSnap(predicted);
 
-      // Animer vers le snap (framer-motion spring fait la transition)
       setTargetHeight(snapped);
       lastSnapRef.current = snapped;
       onSnapChange?.(snapped);
@@ -124,6 +159,9 @@ export function PanelRoot({
     ? { left: -maxSnap * 0.5, right: 0, top: 0, bottom: 0 }
     : { top: -maxSnap * 0.5, bottom: 0, left: 0, right: 0 };
 
+  // Hauteur finale : 0 quand fermé, animatedHeight quand ouvert
+  const panelHeight = open ? animatedHeight : 0;
+
   return (
     <AnimatePresence>
       {open && (
@@ -141,12 +179,13 @@ export function PanelRoot({
             />
           )}
 
-          {/* Panel container */}
+          {/* Panel container — data-panel-root pour les CSS transitions */}
           <motion.div
             key="panel-root"
             ref={containerRef}
+            data-panel-root
             className={cn(
-              "fixed z-50 flex flex-col outline-none",
+              "fixed z-50 flex flex-col outline-none overflow-hidden",
               direction === "bottom"
                 ? "inset-x-0 bottom-0"
                 : "inset-y-0 bottom-0 right-0 h-full w-[480px] border-l border-neutral-200",
@@ -155,8 +194,10 @@ export function PanelRoot({
             style={{
               ...cssVars,
               ...style,
-              borderRadius: direction === "bottom" ? "var(--panel-border-radius) var(--panel-border-radius) 0 0" : undefined,
-              height: isDesktop ? "100%" : "var(--panel-height)",
+              borderRadius: direction === "bottom"
+                ? "var(--panel-border-radius) var(--panel-border-radius) 0 0"
+                : undefined,
+              height: isDesktop ? "100%" : `${panelHeight}px`,
             }}
             initial={
               direction === "bottom"
@@ -190,14 +231,15 @@ export function PanelRoot({
               </div>
             )}
 
-            {/* Scrollable content — opacité animée via CSS var */}
+            {/* Scrollable content — fade-in avec delay via data-panel-scroll */}
             <div
               ref={scrollRef}
+              data-panel-scroll
               className="flex-1 overflow-y-auto scroll-hidden"
               style={{
                 touchAction: "pan-y",
                 paddingBottom: "env(safe-area-inset-bottom, 0px)",
-                opacity: cssVars["--panel-content-opacity" as keyof typeof cssVars] as number,
+                opacity: contentVisible ? 1 : 0,
               }}
               onScroll={(e) => {
                 onScroll?.(e.currentTarget.scrollTop);
