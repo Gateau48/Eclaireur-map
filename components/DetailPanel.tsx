@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Drawer } from "vaul";
 import {
   ArrowUpRight,
   Building2,
@@ -26,6 +25,7 @@ import {
 } from "@/lib/schema";
 import { PHASE_TAG_COLOR } from "@/lib/status";
 import type { PanelView } from "@/lib/panel-view";
+import { PanelRoot } from "@/components/PanelRoot";
 
 export const PANEL_SNAP_POINTS = [0.5, 0.92] as const;
 export type PanelSnap = (typeof PANEL_SNAP_POINTS)[number];
@@ -62,7 +62,6 @@ export function DetailPanel({
   onOpenProject
 }: DetailPanelProps) {
   const isDesktop = useIsDesktop();
-  const scrollRef = useRef<HTMLDivElement>(null);
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [tab, setTab] = useState<"apercu" | "prix" | "promoteur" | "photos">("apercu");
   const [lightboxPhoto, setLightboxPhoto] = useState<{ src: string; alt: string; index: number; all: { src: string; alt: string }[] } | null>(null);
@@ -71,101 +70,56 @@ export function DetailPanel({
     setTab("apercu");
     setHeaderCollapsed(false);
     setLightboxPhoto(null);
-    scrollRef.current?.scrollTo({ top: 0 });
-  }, [view]);
-
-  const handleContentScroll = useCallback(() => {
-    if (!scrollRef.current) return;
-    setHeaderCollapsed(scrollRef.current.scrollTop > 120);
-  }, []);
-
-  useEffect(() => {
-    if (!view) return;
-    const resetPointerEvents = () => {
-      if (document.body.style.pointerEvents === "none")
-        document.body.style.pointerEvents = "";
-    };
-    resetPointerEvents();
-    const observer = new MutationObserver(resetPointerEvents);
-    observer.observe(document.body, {
-      attributes: true,
-      attributeFilter: ["style"]
-    });
-    return () => observer.disconnect();
   }, [view]);
 
   const title = view?.type === "project" ? view.project.name : view?.promoter.name ?? "";
 
+  const direction = isDesktop ? "right" : "bottom";
+
   return (
-    <Drawer.Root
-      open={!!view}
-      onOpenChange={(open) => !open && onClose()}
-      direction={isDesktop ? "right" : "bottom"}
-      snapPoints={isDesktop ? undefined : [...PANEL_SNAP_POINTS]}
-      activeSnapPoint={snap}
-      setActiveSnapPoint={onSnapChange}
-      dismissible={false}
-      modal={false}
-    >
-      <Drawer.Portal>
-        <Drawer.Content
-          className={cn(
-            "fixed z-20 flex flex-col outline-none bg-white",
-            "inset-x-0 bottom-0 rounded-t-3xl shadow-[0_-2px_20px_rgba(0,0,0,0.08)]",
-            "md:inset-y-0 md:bottom-0 md:right-0 md:left-auto md:h-full md:w-[480px] md:rounded-none md:border-l md:border-neutral-200"
-          )}
-          style={{ height: "min(92dvh, 92vh)" }}
-        >
-          <Drawer.Handle className="mx-auto mt-2 h-1 w-9 shrink-0 rounded-full bg-neutral-300 md:hidden" />
+    <>
+      <PanelRoot
+        open={!!view}
+        onClose={onClose}
+        onSnapChange={onSnapChange}
+        onScroll={(scrollTop) => setHeaderCollapsed(scrollTop > 120)}
+        direction={direction}
+        snapPoints={PANEL_SNAP_POINTS}
+        blocking={false}
+        className="bg-white shadow-[0_-2px_20px_rgba(0,0,0,0.08)]"
+      >
+        {view?.type === "project" && (
+          <ProjectView
+            project={view.project}
+            promoter={view.promoter}
+            tab={tab}
+            setTab={setTab}
+            onOpenProject={onOpenProject}
+            headerCollapsed={headerCollapsed}
+            title={title}
+            canGoBack={canGoBack}
+            onBack={onBack}
+            onClose={onClose}
+            onPhotoClick={(src, alt, index, all) =>
+              setLightboxPhoto({ src, alt, index, all })
+            }
+          />
+        )}
 
-          {/* Contenu scrollable — UN SEUL container pour tout */}
-          {view?.type === "project" && (
-            <div
-              ref={scrollRef}
-              onScroll={handleContentScroll}
-              className="flex-1 overflow-y-auto scroll-hidden"
-              style={{ touchAction: "pan-y", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-            >
-              <ProjectView
-                project={view.project}
-                promoter={view.promoter}
-                tab={tab}
-                setTab={setTab}
-                onOpenProject={onOpenProject}
-                headerCollapsed={headerCollapsed}
-                title={title}
-                canGoBack={canGoBack}
-                onBack={onBack}
-                onClose={onClose}
-                onPhotoClick={(src, alt, index, all) =>
-                  setLightboxPhoto({ src, alt, index, all })
-                }
-              />
-            </div>
-          )}
-
-          {view?.type === "promoter" && (
-            <div
-              ref={scrollRef}
-              onScroll={handleContentScroll}
-              className="flex-1 overflow-y-auto scroll-hidden"
-              style={{ touchAction: "pan-y", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-            >
-              <PromoterView
-                promoter={view.promoter}
-                onOpenProject={onOpenProject}
-                title={title}
-                canGoBack={canGoBack}
-                onBack={onBack}
-                onClose={onClose}
-                onPhotoClick={(src, alt, index, all) =>
-                  setLightboxPhoto({ src, alt, index, all })
-                }
-              />
-            </div>
-          )}
-        </Drawer.Content>
-      </Drawer.Portal>
+        {view?.type === "promoter" && (
+          <PromoterView
+            promoter={view.promoter}
+            onOpenProject={onOpenProject}
+            title={title}
+            canGoBack={canGoBack}
+            onBack={onBack}
+            onClose={onClose}
+            onPhotoClick={(src, alt, index, all) =>
+              setLightboxPhoto({ src, alt, index, all })
+            }
+          />
+        )}
+      </PanelRoot>
 
       {/* Lightbox */}
       {lightboxPhoto && (
@@ -181,7 +135,7 @@ export function DetailPanel({
           }}
         />
       )}
-    </Drawer.Root>
+    </>
   );
 }
 

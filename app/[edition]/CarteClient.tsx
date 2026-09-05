@@ -12,7 +12,7 @@ import {
 import { SearchBar } from "@/components/SearchBar";
 import { MapLegend } from "@/components/MapLegend";
 import type { SearchApiResult } from "@/app/api/search/[edition]/route";
-import { DetailPanel, PANEL_SNAP_POINTS } from "@/components/DetailPanel";
+import { DetailPanel } from "@/components/DetailPanel";
 import { clusterItems, type Clusterable } from "@/lib/clustering";
 import { findProjectAndPromoter, findPromoterById, type PanelView } from "@/lib/panel-view";
 import { PHASE_MARKER_COLOR } from "@/lib/status";
@@ -26,7 +26,7 @@ interface MarkerPoint extends Clusterable {
 
 export function CarteClient({ edition }: { edition: EditionData }) {
   const [stack, setStack] = useState<PanelView[]>([]);
-  const [snap, setSnap] = useState<number | string | null>(PANEL_SNAP_POINTS[0]);
+  const [snap, setSnap] = useState<number | string | null>(null);
   const view = stack[stack.length - 1] ?? null;
 
   // La carte gère son propre déplacement via ses gestes — pas de scroll de
@@ -64,7 +64,7 @@ export function CarteClient({ edition }: { edition: EditionData }) {
     if (!found) return;
     const nextView: PanelView = { type: "project", ...found };
     setStack(resetStack ? [nextView] : (s) => [...s, nextView]);
-    setSnap(PANEL_SNAP_POINTS[1]);
+    setSnap(Math.round(window.innerHeight * 0.92));
   }
 
   function goBack() {
@@ -84,7 +84,7 @@ export function CarteClient({ edition }: { edition: EditionData }) {
       if (!promoter) return;
       const nextView: PanelView = { type: "promoter", promoter };
       setStack([nextView]);
-      setSnap(PANEL_SNAP_POINTS[1]);
+      setSnap(Math.round(window.innerHeight * 0.92));
     }
   }
 
@@ -105,7 +105,7 @@ export function CarteClient({ edition }: { edition: EditionData }) {
       <SearchBar
         onSearch={handleSearch}
         onSelect={handleSelectSearchResult}
-        hidden={!!view && snap === PANEL_SNAP_POINTS[1]}
+        hidden={!!view && typeof snap === "number" && snap >= window.innerHeight * 0.9}
         panelOpen={!!view}
       />
 
@@ -130,7 +130,7 @@ function MapSync({ view, snap }: { view: PanelView | null; snap: number | string
 
   useEffect(() => {
     if (!map) return;
-    const heightPx = typeof snap === "number" ? Math.round(snap * window.innerHeight) : 96;
+    const heightPx = typeof snap === "number" ? snap : 96;
     map.easeTo({ padding: { bottom: heightPx, top: 0, left: 0, right: 0 }, duration: 300 });
   }, [map, snap]);
 

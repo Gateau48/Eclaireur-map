@@ -31,10 +31,12 @@
   }
 }
 
-/* Transitions fluides pour le panel */
-[data-vaul-drawer] {
-  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+/* Transitions fluides pour le panel — CSS custom properties animées par framer-motion */
+[data-panel-root] {
+  will-change: transform, height;
 }
+
+/* Suppression de l'ancien Vaul transition */
 
 /* Focus clavier visible partout, jamais supprimé.
    GARDE-FOU : `outline` ne suit pas border-radius (rendu en rectangle net
