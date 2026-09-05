@@ -12,13 +12,6 @@ const SPRING_CONFIG = {
   mass: 1,
 };
 
-const RUBBER_BAND_FACTOR = 0.55;
-
-function rubberBand(distance: number, dimension: number): number {
-  const d = Math.max(0, distance);
-  return (d * dimension * RUBBER_BAND_FACTOR) / (dimension + RUBBER_BAND_FACTOR * d);
-}
-
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
@@ -53,17 +46,11 @@ export function PanelRoot({
     headerRef,
     targetHeight,
     setTargetHeight,
-    setCurrentHeight,
     cssVars,
     findSnap,
-    snapPointsPx,
     minSnap,
     maxSnap,
     lastSnapRef,
-    setIsDragging,
-    setDragY,
-    dragY,
-    isDragging,
   } = usePanelAnimation({
     open,
     snapPointsPercent: snapPoints,
@@ -93,19 +80,14 @@ export function PanelRoot({
     };
   }, [open, blocking]);
 
-  // --- Handle drag end ---
+  // --- Handle drag end : trouver le snap le plus proche ---
   const handleDragEnd = useCallback(
     (_: unknown, info: PanInfo) => {
-      setIsDragging(false);
-      setDragY(0);
-
+      // Prédiction de landing basée sur la vélocité et l'offset
       const velocity = isDesktop ? info.velocity.x : info.velocity.y;
       const offset = isDesktop ? info.offset.x : info.offset.y;
 
-      // Prédiction de landing (inspiré de react-spring-bottom-sheet)
-      const predicted = targetHeight + velocity * 0.3 + offset * 0.1;
-
-      // Direction de fermeture
+      // Si le user a swipé suffisamment vers l'extérieur → fermer
       const isDismiss =
         (direction === "bottom" && info.offset.y > minSnap * 0.4 && info.velocity.y > 0) ||
         (direction === "right" && info.offset.x > minSnap * 0.4 && info.velocity.x > 0);
@@ -115,9 +97,12 @@ export function PanelRoot({
         return;
       }
 
+      // Calculer la position prédite et trouver le snap le plus proche
+      const predicted = targetHeight + velocity * 0.3 + offset * 0.1;
       const snapped = findSnap(predicted);
+
+      // Animer vers le snap (framer-motion spring fait la transition)
       setTargetHeight(snapped);
-      setCurrentHeight(snapped);
       lastSnapRef.current = snapped;
       onSnapChange?.(snapped);
     },
@@ -129,44 +114,15 @@ export function PanelRoot({
       isDesktop,
       minSnap,
       setTargetHeight,
-      setCurrentHeight,
-      setIsDragging,
-      setDragY,
       onSnapChange,
       lastSnapRef,
     ]
   );
 
-  // --- Handle drag ---
-  const handleDrag = useCallback(
-    (_: unknown, info: PanInfo) => {
-      const delta = isDesktop ? -info.offset.x : -info.offset.y;
-
-      // Rubber band au-delà des limites
-      let newHeight = targetHeight + delta;
-      if (newHeight < minSnap) {
-        newHeight = minSnap - rubberBand(minSnap - newHeight, minSnap);
-      } else if (newHeight > maxSnap) {
-        newHeight = maxSnap + rubberBand(newHeight - maxSnap, maxSnap);
-      }
-
-      setCurrentHeight(newHeight);
-      setDragY(0); // la hauteur est déjà ajustée
-    },
-    [targetHeight, minSnap, maxSnap, isDesktop, setCurrentHeight, setDragY]
-  );
-
-  const handleDragStart = useCallback(() => {
-    setIsDragging(true);
-    setDragY(0);
-  }, [setIsDragging, setDragY]);
-
-  // --- Calculer la hauteur du drag gesture ---
+  // --- Drag constraints ---
   const dragConstraints = isDesktop
     ? { left: -maxSnap * 0.5, right: 0, top: 0, bottom: 0 }
     : { top: -maxSnap * 0.5, bottom: 0, left: 0, right: 0 };
-
-  const dragDirectionLock = true;
 
   return (
     <AnimatePresence>
@@ -182,7 +138,6 @@ export function PanelRoot({
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
               onClick={onClose}
-              style={{ pointerEvents: isDragging ? "none" : "auto" }}
             />
           )}
 
@@ -193,14 +148,15 @@ export function PanelRoot({
             className={cn(
               "fixed z-50 flex flex-col outline-none",
               direction === "bottom"
-                ? "inset-x-0 bottom-0 rounded-t-3xl"
+                ? "inset-x-0 bottom-0"
                 : "inset-y-0 bottom-0 right-0 h-full w-[480px] border-l border-neutral-200",
               className
             )}
             style={{
               ...cssVars,
               ...style,
-              height: isDesktop ? "100%" : undefined,
+              borderRadius: direction === "bottom" ? "var(--panel-border-radius) var(--panel-border-radius) 0 0" : undefined,
+              height: isDesktop ? "100%" : "var(--panel-height)",
             }}
             initial={
               direction === "bottom"
@@ -219,11 +175,9 @@ export function PanelRoot({
             }
             transition={SPRING_CONFIG}
             drag={direction === "bottom" ? "y" : "x"}
-            dragDirectionLock={dragDirectionLock}
+            dragDirectionLock
             dragConstraints={dragConstraints}
             dragElastic={0.1}
-            onDragStart={handleDragStart}
-            onDrag={handleDrag}
             onDragEnd={handleDragEnd}
           >
             {/* Handle bar (mobile uniquement) */}
@@ -236,13 +190,14 @@ export function PanelRoot({
               </div>
             )}
 
-            {/* Scrollable content */}
+            {/* Scrollable content — opacité animée via CSS var */}
             <div
               ref={scrollRef}
               className="flex-1 overflow-y-auto scroll-hidden"
               style={{
                 touchAction: "pan-y",
                 paddingBottom: "env(safe-area-inset-bottom, 0px)",
+                opacity: cssVars["--panel-content-opacity" as keyof typeof cssVars] as number,
               }}
               onScroll={(e) => {
                 onScroll?.(e.currentTarget.scrollTop);

@@ -2,12 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-export interface SnapPointConfig {
-  min: number;
-  max: number;
-  default: number;
-}
-
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
@@ -15,9 +9,12 @@ function clamp(value: number, min: number, max: number): number {
 /**
  * Hook inspiré de react-spring-bottom-sheet qui gère :
  * - Le calcul des snap points en pixels
- * - L'interpolation spring pour les CSS custom properties
- * - Le rubber band effect au drag
+ * - Les interpolations CSS (border radius, content opacity, backdrop opacity)
  * - Le lastSnap (mémoire de la dernière position)
+ *
+ * Le drag visuel est géré par framer-motion (x/y transform).
+ * Ce hook fournit les CSS custom properties pour les effets visuels
+ * et calcule le snap point cible après un drag.
  */
 export function usePanelAnimation({
   open,
@@ -30,10 +27,7 @@ export function usePanelAnimation({
   direction: "bottom" | "right";
   onClose: () => void;
 }) {
-  const [currentHeight, setCurrentHeight] = useState(0);
   const [targetHeight, setTargetHeight] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragY, setDragY] = useState(0);
   const lastSnapRef = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -76,7 +70,6 @@ export function usePanelAnimation({
   useEffect(() => {
     if (open) {
       setTargetHeight(defaultSnap);
-      setCurrentHeight(defaultSnap);
     } else {
       setTargetHeight(0);
     }
@@ -94,63 +87,43 @@ export function usePanelAnimation({
     return () => window.removeEventListener("resize", handleResize);
   }, [open, targetHeight]);
 
-  // Enregistrer le snap actuel quand l'animation se termine
+  // Enregistrer le snap actuel quand la cible change
   useEffect(() => {
-    if (!isDragging) {
+    if (targetHeight > 0) {
       lastSnapRef.current = targetHeight;
     }
-  }, [targetHeight, isDragging]);
+  }, [targetHeight]);
 
-  // Calculer les interpolations CSS (inspiré de useSpringInterpolations)
+  // Calculer les interpolations CSS basées sur targetHeight
+  // Ces variables sont utilisées pour les effets visuels (opacity, border radius)
+  // pendant que framer-motion gère le drag x/y
   const cssVars = useMemo(() => {
-    const effectiveHeight = isDragging
-      ? clamp(currentHeight + dragY, minSnap * 0.3, maxSnap * 1.15)
-      : currentHeight;
+    // Border radius: diminue quand le panneau grandit (16px → 0px)
+    const borderRadius = clamp(maxSnap - targetHeight, 0, 16);
 
-    // Border radius: diminue quand le panneau grandit
-    const maxHeight = maxSnap;
-    const borderRadius = clamp(maxHeight - effectiveHeight, 0, 16);
-
-    // Content opacity: fade-in pendant l'ouverture
+    // Content opacity: fade-in pendant l'ouverture (0 → 1)
+    // Le contenu devient visible quand le panneau dépasse la moitié du minSnap
     const minX = Math.max(minSnap / 2 - 45, 0);
     const maxX = Math.min(minSnap / 2 + 45, minSnap);
     const slope = 1 / (maxX - minX);
-    const contentOpacity = clamp((effectiveHeight - minX) * slope, 0, 1);
+    const contentOpacity = clamp((targetHeight - minX) * slope, 0, 1);
 
-    // Backdrop opacity: proportionnelle à la hauteur
-    const backdropOpacity = minSnap ? clamp(effectiveHeight / minSnap, 0, 0.6) : 0;
-
-    // Translate Y pour rubber band
-    let translateY = 0;
-    if (effectiveHeight < minSnap) {
-      translateY = minSnap - effectiveHeight;
-    } else if (effectiveHeight > maxSnap) {
-      translateY = maxSnap - effectiveHeight;
-    }
-
-    // Hauteur finale (clampée aux bounds)
-    const finalHeight = clamp(effectiveHeight, minSnap, maxSnap);
+    // Backdrop opacity: proportionnelle à la hauteur (0 → 0.6)
+    const backdropOpacity = minSnap ? clamp(targetHeight / minSnap, 0, 0.6) : 0;
 
     return {
-      "--panel-height": `${finalHeight}px`,
+      "--panel-height": `${targetHeight}px`,
       "--panel-border-radius": `${borderRadius}px`,
       "--panel-content-opacity": contentOpacity,
       "--panel-backdrop-opacity": backdropOpacity,
-      "--panel-translate-y": `${translateY}px`,
     } as React.CSSProperties;
-  }, [currentHeight, dragY, isDragging, minSnap, maxSnap]);
+  }, [targetHeight, minSnap, maxSnap]);
 
   return {
     containerRef,
     headerRef,
-    currentHeight,
     targetHeight,
-    isDragging,
-    setIsDragging,
     setTargetHeight,
-    setCurrentHeight,
-    dragY,
-    setDragY,
     cssVars,
     findSnap,
     snapPointsPx,
